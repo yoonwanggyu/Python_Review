@@ -1,0 +1,251 @@
+<02.26>
+
+## 2차시 : 숫자형 자료형
+    ## 지수 표현
+a = 5.15E+10
+print(a)
+
+    ## 매개변수 end,sep
+print("Hello World!", end = "->")
+print("Hello World!", end = "\n")
+
+print("Python","is","too","fun!", sep = "->")
+
+    ## 확인문제
+# 변수 a를 만들고, 변수 a에 정수 5를 할당해보세요.
+# 변수 b를 만들고, 변수 b에 정수 10을 할당해보세요.
+# 두 변수 a,b를 더한 값을 변수 c에 할당해보세요.
+# 두 변수 a,b를 뺀 값을 변수 d에 할당해보세요.
+# 두 변수 a,b를 곱한 값을 변수 e에 할당해보세요.
+# 두 변수 a,b를 나눈 값을 변수 f에 할당해보세요.
+# 변수 a를 변수 b로 나눈 후, 나머지 값을 g에 할당해보세요.
+# 변수 b를 변수 a로 나눈 후, 몫을 h에 할당해보세요.
+# 마지막으로 변수 a~h까지 모두 더한 값을 출력해보세요.
+
+a=5
+b=10
+c = a + b
+d = a-b
+e = a*b
+f = a/b
+g = a % b
+h = b // a
+print(a+b+c+d+e+f+g+h)
+
+## 3차시 : 문자형 자료형
+text = "He said \"Hi\" to me."
+print(text)
+
+text = "Life is too short \n You need Python."
+print(text)
+
+text = """Life is too short
+You need Python.
+"""
+print(text)
+
+a = "Python is too fun!"
+print(len(a))   # 문자열 길이
+print(a[-1])
+print(a[:])
+
+    ## 문자열 전용 함수 : format,count,find,join,upper,lower,lstrip,rstrip,strip,replace,split,startwith,endwith,isalpha,isdigit,isalnum,isspace
+text = "{:>10}".format("Hi")  # 10개의 공간을 할당하고 Hi를 오른쪽에 삽입
+print(text)
+text = "{:<10}".format("Hi")
+print(text)
+text = "{:^10}".format("Hi")  # Hi를 가운데 삽입
+print(text)
+text = "{:=^10}".format("Hi")
+print(text)
+text = "{:.2f}".format(3.141592)  # .2f : 소숫점 2자리까지 표현하고 실수형
+print(text)
+
+text = "Python is too fun!"
+print(text.count("o"))
+print(text.find("x"))   # 없으면 -1
+
+text = ",".join("abcd")
+print(text)
+
+text = "Python is too fun!"
+print(text.upper())
+print(text.lower())
+
+text = "      Hello   "
+print(text.lstrip())  # 왼쪽 공백 날림
+print(text.rstrip())
+print(text.strip())
+
+text = "Python is too fun!"
+print(text.replace("Python","Java"))
+
+text = "Python is too fun!"
+print(text.split())  # 리스트에 넣어줌
+text = "Python:is:too:fun!"
+print(text.split(":"))
+
+text = "Python is too fun!"
+text.startswith("Python")  # Python 으로 시작하니?
+text.endswith("Python")    # Python 으로 끝나니?
+print(text.isalpha())      # 알파벳으로 구성되있니?(공백 X)
+print(text.isdigit())
+print(text.isalnum())      # 숫자 + 알파벳으로 구성되있니?
+print(text.isspace())      # 공백으로 구성되있니?
+
+    ## 확인문제
+# 변수 n에 할당된 값 만큼 "수박" 출력하는 코드를 작성해보세요.
+
+# n = 4 일 때,
+# 수박수박
+
+# n = 5 일 때,
+# 수박수박수
+
+n = 7
+print("수박" *(n//2) + "수" *(n%2))
+
+n = 7
+t = "수박" * n
+print(t)
+print(t[0:n])
+
+## 4차시 : 리스트 자료형
+a = [1,2,3]
+b = [4,5,6]
+a + b
+a * 3
+len(a)
+
+a[2] = 4
+print(a)
+
+del a[1]  # 리스트 요소 지우기
+print(a)
+
+    ## 리스트 전용 함수 : append,sort,reverse,index,insert,remove,pop,count,extend
+a = [1,2,3]
+a.append(4)
+print(a)
+
+a = [4,2,1,3]
+a.sort()
+print(a)
+a.sort(reverse=True)  # 내림차순 정렬
+print(a)
+
+a = ["a","c","b"]
+a.reverse()   # 정렬이 아닌 그냥 거꾸로 출력
+print(a)
+
+a = ["a","c","b"]
+print(a[::-1]) # reverse()와 같은 의미
+
+a = [4,2,1,3]
+a.index(1)  # 1을 찾아라
+a.index(5)  # 에러 발생
+
+a = [1,2,3]
+a.insert(1,4)  # 1번째에 4를 넣어라
+print(a)
+
+a = [1,2,3,5,3,5]
+a.remove(3)  # 가장 앞에 있는 3만 제거해줌  <-> del 키워드
+print(a)
+
+a = [1,2,3]
+a.pop()   # 맨 뒤에있는 숫자를 뽑아줌!!
+print(a)  # 뽑은 숫자는 지워지는 것이 아닌 어딘가에 저장 가능
+
+a = [1,2,3,5,3,5]
+a.count(3)
+
+a = [1,2,3]
+a.extend([4,5])
+print(a)
+
+    ## 확인문제
+# a = [1,3,5,4,2]
+# 리스트 값이 저장된 a의 최대값을 변수 c에 할당하시고, 최소값을 변수 d에 할당하세요.
+# b = [1,2,3,[4,5]]
+# 변수 b에서 인덱싱을 사용하여 5만 추출해서 변수 e에 할당하세요.
+# 마지막으로 변수 c, d, e를 곱한 값을 화면에 출력해보세요.
+
+c = a[2]
+d = a[0]
+e = b[3][1]
+print(c*d*e)
+
+## 5차시 : 튜플 자료형 
+    ## 1) 튜플은 한번 정하면 절대 수정하거나 삭제할 수가 없다 -> 리스트로 변환해서 수정/삭제 가능
+    ## 2) 하나의 변수에 여러개의 값을 할당하면, 자동으로 튜플로 묶어서 저장해줌
+    ## 3) 기본적으로는 하나의 값은 취급하지 않음
+tuple = (1,2,3,[4,5])
+print(tuple[3][0])
+
+a = (1,2,3,4,5,6,7,8,9,10)
+print(a[::2])
+
+    ## 확인문제
+# 튜플이 저장된 변수 a에 정수 5를 추가하시고, 내림차순으로 정렬된 튜플을 화면에 출력해보세요.
+# a = (2, 3, 1, 4)
+
+a = (2, 3, 1, 4)
+a = list(a)
+a.append(5)
+a.sort(reverse = True)
+a = tuple(a)
+print(a)
+
+## 6차시 : 딕셔너리 자료형
+    ## 1) 딕셔너리는 무조건 Key값 기준으로 판단하고, 수행한다
+    ## 2) 딕셔너리는 집합 형태로 구성되어 있어, 순서가 없다
+    ## 3) Key값으로 리스트를 쓸 수 없다
+    ## 4) 중복된 Key값을 존재할 수 없다
+    ## 5) Key값으로 튜플은 가능하다
+dic = {"이름":"홍길동","성별":"남자","나이":30}
+dic["사는곳"] = "수원"
+print(dic)
+print("이름" in dic)
+print("홍길동" in dic)
+
+dic = {"이름":"홍길동","성별":"남자","나이":30}
+del dic["나이"]
+print(dic)
+print(dic["이름"])
+
+dic = {"이름":"홍길동","성별":"남자","나이":30}
+dic["이름"] = "강동원"
+print(dic)
+
+dic = {"이름":"홍길동","이름":"강동원"}
+print(dic)  # key값 중복 X => 맨 뒤에 저장된 key값으로 나타남
+
+    ## 딕셔너리 전용 함수 : keys(),values(),items()
+dic = {"이름":"홍길동","성별":"남자","나이":30}
+print(dic.keys())
+print(dic.values())
+print(dic.items())
+
+    ## 확인문제
+# 죠스바 1200원, 메로나 1500원, 월드컵 1800원
+# 1. 위의 아이스크림 정보를 아이스크림 이름은 Key값, 가격은 Value으로 하는 딕셔너리를 만드신 후, 변수 dic에 할당해보세요.
+# 2. 1에서 만든 변수 dic에 붕어싸만코 2000원에 대한 정보를 추가해보세요. (이름은 Key, 가격은 Value)
+# 3. 변수 dic에서 메로나에 대한 정보를 삭제해주세요.
+# 4. 변수 dic에서 죠스바의 가격을 1500원으로 변경해주세요.
+# 5. 변수 dic을 화면에 출력해보세요.
+# 6. 변수 dic의 Key값들만 모두 출력해주세요.
+# 7. 변수 dic의 Value값을만 모두 출력해주세요.
+
+dict = {
+    "죠스바" : "1200",
+    "메로나" : "1500",
+    "월드컵" : "1800"
+}
+dict["붕어싸만코"] = 2000
+del dict["메로나"]
+dict["죠스바"] = 1500
+print(dict)
+print(dict.keys())
+print(dict.values())
+print(dict.items())
