@@ -1,0 +1,415 @@
+<02.28>
+
+## 13차시 : 함수-------------------------------------------------------------
+
+    ## 함수 안에서 사용되는 변수는 함수 안에서만 사용이 된다
+
+    ## lambda
+
+    ## ex)
+def add(num1,num2):
+    return num1 + num2
+a = add(3,4)
+print(a)
+
+def say():             # 입력값 없어도 가능
+    return "Hello"
+a = say()
+print(a)
+
+def add(num1,num2):
+    print(num1 + num2)  # return : (반환값)출력값이 없음
+a = add(3,4)
+print(a)                # None
+
+
+def intro(name,age,sex=5):  # sex : 기본값 설정
+    print("나의 이름은 {}이고, {}살입니다.".format(name,age))
+    if sex == 5:
+        print("나는 남자입니다.")
+    else :
+        print("나는 여자입니다.")
+intro("홍길동",30)
+intro("아이유",20,3)
+
+def test():
+    global a
+    a = 5    # 지역변수 : 함수 안에서만 영향을 미친다
+a = 0        # 전역변수
+test()
+print(a)
+
+    ## 재귀함수 : 내가 나를 부르는 함수
+def fac(n):  # 기본형태
+    a = 1
+    for i in range(1,n+1):
+        a = a * i
+    return a
+print(fac(5))
+
+def fac(n):   # 재귀함수
+    if n == 1:
+        return 1
+    else:
+        return n * fac(n-1)    
+print(fac(5))   
+
+    ## 확인문제
+    # 피보나치 수열에서 위치에 해당하는 값을 반환해주는 함수를 완성해보세요. 
+    # 예) fibo함수에 5를 전달하면 5번째 피보나치 수열의 값을 반환하면 됩니다.
+    # 피보나치 수열 : 0, 1, 1, 2, 3, 5, 8, 13, 21 ...
+
+def fibo(n):
+    if n == 1:
+        return 0
+    elif n == 2:
+        return 1
+    else:
+        return fibo(n-1) + fibo(n-2)
+print(fibo(5))
+print(fibo(7))
+
+## 14차시 : 클래스 -----------------------------------------------------------------
+
+    ## 비유하면 붕어빵을 만들어낼 수 있는 틀
+    ## 함수와 변수들을 모아 놓는 주머니
+
+    ## 클래스 초기화 함수 : 객체가 생성될 때, 자동으로 한번 실행되는 함수
+    ## def_init_(self):
+
+    ## 상속
+    ## 클래스1에서 만든 함수를 클래스2에 상속시켜 사용하게 함
+    ## class 클래스2(클래스1):
+
+class Bank:
+    # 권한을 줄 때, 자동으로 한번 실행되는 함수
+    def __init__(self):   # 클래스 초기화 함수
+        print("가입을 축하합니다.")
+        self.money = 0
+    def deposit(self,a):  # self : 빈칸 개념 / 주어질 사람명이나 사물명
+        self.money += a
+
+person1 = Bank()         # 클래스 부여
+person1.deposit(50000)   # self = person1
+print(person1.money)
+
+person2 = Bank()
+person2.deposit(30000)   # self = person2
+print(person2.money)
+
+person3 = Bank()
+print(person3.money)     # 클래스 초기화 함수때문에 deposit() 함수 사용 안해도 값이 출력됨
+
+    # Bank2 클래스는 Bank에서 제공하는 모든 함수들을 상속받는다
+class Bank2(Bank):
+    pass
+
+person4 = Bank2()
+
+    ## 확인문제
+    # 수업때 진행했던 Bank( ) 클래스에서 금액을 출금하는 기능도 추가해서 사용해보세요. 
+
+class Bank:
+    def __init__(self):   
+        print("가입을 축하합니다.")
+        self.money = 0
+    def deposit(self,a):    # 입금 함수
+        self.money += a
+    def withdraw(self,a):   # 출금 함수
+        self.money -= a
+        
+person1 = Bank()         
+person1.deposit(50000)    # 50,000원 입금
+person1.withdraw(35000)   # 35,000원 출금
+print(person1.money)      # 남은 돈 계산
+
+## 15차시 : 예외처리------------------------------------------------------
+
+    ## 에러가 발생했을 때, 에러를 무시하는 기술
+
+    ## 에러 일부러 발생시키기
+    ## raise 에러이름
+
+try:
+    print("Hello")
+    print(me)
+    print("Bye")
+except ZeroDivisionError:
+    print("0으로 나눈 에러 처리 완료!")
+except NameError:
+    print("에러 발생!")
+    print("변수 이름 에러 처리 완료!")
+finally:
+    print("Bye!")
+
+try:
+    if 뭔가 == True:
+        raise NameError
+except:
+    pass
+
+    ## 확인문제
+    # 아래 코드에서 찾았습니다! 가 출력되었을때, 모든 반복문을 강제로 나가는 코드로 수정해보세요. 
+
+try:
+    for n1 in range(1000): 
+        for n2 in range(1000): 
+            for n3 in range(1000): 
+                for n4 in range(1000): 
+                    for n5 in range(1000): 
+                        if (n1+n2+n3+n4+n5) == 1000:
+                            print(f"{n1}+{n2}+{n3}+{n4}+{n5}=1000")
+                            print("찾았습니다!")
+                            raise NameError
+except:
+    print("끝!!")
+
+## 16차시 : 내장함수---------------------------------------------------------------
+
+print("life","is","too short")
+print("life"+"is"+"too short")
+
+for i in range(10):
+    print(i,end=" ")    # 기본값 : end = "\n"
+
+    ## f = open("새파일.txt","wt")
+    ## f.write("hello")
+    ## f.close()
+
+f = open("새파일.txt","rt")
+data = f.read()
+print(data)
+
+    ## 모두 참이어야 참 : all
+all([1,2,3])
+all([0,1,2,3])  # 0 : False
+
+    ## 하나라도 참이면 참 : any
+any([0,1,2,3])
+any([0,0,0,0])
+
+    ## 몫과 나머지 : divmod
+divmod(7,3)
+
+    ## 리스트,튜플,문자열의 위치과 값 반환 : enumerate
+list(enumerate(['body','foo','bar']))
+
+    ## 실행 가능한 문자열을 실행한 결과값을 반환 : eval
+eval('1+2')
+eval("'hi' + 'a'")
+eval('divmod(4,3)')
+
+    ## filter(함수,리스트) : 리스트의 값을 함수에 적용시켜 True값만 출력
+def positive(x):
+    return x > 0
+print(list(filter(positive,[1,-3,0,2,0,-5,6])))
+
+    ## 주소값 반환 : id
+a = 3
+id(3)
+id(a)
+
+    ## 정수 반환 : int
+int(3.14)
+int("11",2)  # 이진법
+
+    ## map : 모든 요소에 함수값을 적용한다
+def two_times(x):
+    return x * 2
+print(list(map(two_times,[1,2,3,4])))
+
+    ## max
+max("python")   # 문자열도 가능
+
+    ## pow(x,y) : x의 y제곱
+pow(2,4)    
+2 ** 4
+
+    ## 반올림 : round
+round(5.678,2)
+round(4.23)
+
+    ## 정렬 : sorted
+sorted([3,2,4])
+sorted("zero")
+
+    ## 동일한 개수로 묶어주는 함수 : zip
+list(zip([1,2,3],[4,5,6]))
+list(zip([1,2,3],[4,5,6],[7,8,9]))
+list(zip("abc","def"))
+
+    ## ex)
+box1 = ["이순신","홍길동","아이유"]
+box2 = [1,3,5,4,2,-3,-4,-5]
+
+for i,j in enumerate(box1):
+    print(i,j)
+
+def test(x):
+    return x > 0
+print(list(filter(test,box2)))
+
+def test(x):
+    return x * 10
+print(list(map(test,box2)))
+
+    ## 확인문제
+    # 1. 내장함수 abs() 함수를 사용하여 abs(-3) + abs(5)의 값을 변수 a에 할당하세요. 
+    # 2. 내장함수 round()함수를 사용하여 round(4.7)+round(2.2)의 값을 변수 b에 할당하세요. 
+    # 3. 내장함수 max(), min()함수를 사용하여 max([1,3,5,4,2]) + min([1,3,5,4,2])의 값을 변수 c에 할당하세요.
+    # 4. 내장함수 sum() 함수를 사용하여 sum([2,4,3,1,5])의 값을 변수d에 할당하세요. 
+    # 5. 마지막으로 변수 a,b,c,d를 모두 더한 값을 화면에 출력하세요 
+
+a = abs(-3) + abs(5)
+b = round(4.7)+round(2.2)
+c = max([1,3,5,4,2]) + min([1,3,5,4,2])
+d = sum([2,4,3,1,5])
+print(f"{a}+{b}+{c}+{d} = {a+b+c+d}")
+
+## 17차시 : 라이브러리-------------------------------------------------------------------------------
+
+    ## 다른 사람이 만들어 놓은 프로그램을 가져오는 기능
+
+import time
+time.time()
+time.ctime()
+
+import calendar
+print(calendar.calendar(2024))
+calendar.weekday(2015,12,31)
+
+import random
+random.random()       # 0~1사이
+random.randint(1,10)  # 1~10사이
+
+data = [1,2,3,4,5]
+random.shuffle(data)
+print(data)
+random.sample(data,3)  # 랜덤으로 3개 꺼내라
+
+    ## 확인문제
+    # 1. time 라이브러리를 가져와서 tm이라는 이름으로 사용하세요. 
+    # 2. random 라이브러리로부터 randint함수만 가져오세요. 
+    # 3. time 라이브러리를 사용해서 오늘이 무슨 요일인지 화면에 출력해보세요. 
+    # 4. random 라이브러리의 randint()함수를 사용하여 1부터 10까지 컴퓨터가 랜덤으로 번호를 갖게하고, 
+    #    컴퓨터의 번호를 맞추는 게임을 만들어보세요. (번호를 맞추면 "맞췄습니다!"를 출력하고, 틀리면 "틀렸습니다"가 출력되면 됩니다)
+
+# 1)
+import time as tm
+
+# 2)
+from random import randint
+
+# 3)
+print(tm.ctime().split()[0])
+
+# 4)
+com = randint(1,10)
+me = int(input("1부터 10까지 입력해주세요>"))
+if me == com:
+    print("맞췄습니다")
+else:
+    print("틀렸습니다")
+print(f"나는 {me}, 컴퓨터는 {com} 입니다.")
+
+## 18차시 : Numpy 알아보기--------------------------------------------------------
+
+    ## 다차원의 배열 자료구조를 다룰 수 있으며, 백터와 행렬을 사용하는 선형대수 계산에 주로 사용
+
+import numpy as np
+
+    ## np.array : 행렬로 변환
+array1 = np.array([1,2,3])
+print(type(array1))
+print(array1.shape)   # 1차원에 데이터가 3개 있다
+array1 + 3            # 행렬 계산 가능
+
+array2 = np.array([[1,2,3],[4,5,6]])   # 2차원 행렬
+print(type(array2))
+print(array2.shape)    # 2행 3열
+
+    ## ndim : 차원확인
+print(array1.ndim)
+print(array2.ndim)
+
+    ## type 바꾸기
+list1 = [1,2,3,"test"]     # 숫자 + 문자
+array3 = np.array(list1)   # 다 문자열로 바뀜
+print(array3,array3.dtype)
+
+list2 = [1,2,3,4.0]     # 숫자 + 실수
+array4 = np.array(list2)   # 다 실수로 바뀜
+print(array4,array4.dtype)
+
+    ## astype : type 바꾸기
+array_int = np.array([1,2,3])
+array_float = array_int.astype("float64")  # 강제로 실수형으로 바꿈
+print(array_float,array_float.dtype)
+
+    ## np.arange : 행렬 편리하게 생성하기
+sequence_array = np.arange(10)
+print(sequence_array)
+print(sequence_array.dtype,sequence_array.shape)
+
+    ## zeros : 0으로 채워진 행렬 만들기
+zero_array = np.zeros((3,2),dtype='int32')
+print(zero_array)
+print(zero_array.dtype,zero_array.shape)
+
+    ## ones : 1으로 채워진 행렬 만들기
+one_array = np.ones((3,2))
+print(one_array)
+print(one_array.dtype,one_array.shape)
+
+    ## reshape : 차원바꾸기 -> 개수가 같아야함!
+array1 = np.arange(10)
+print("array1 : ",array1)       # 1차원
+array2 = array1.reshape(2,5)    # 2차원
+print("array2 : ",array2)
+
+    ## 값을 바꾸거나 인덱싱 하는것이 리스트와 같음
+array1d = np.arange(1,10)
+array2d = array1d.reshape(3,3)
+print(array2d)
+print("(row=0,col=0) index 가리키는 값: ", array2d[0,0])
+print("(row=1,col=1) index 가리키는 값: ", array2d[1,1])
+print("array2d[0:2,0:2]\n: ",array2d[0:2,0:2])
+
+    ## 불리언 인덱싱
+array1d = np.arange(1,10)
+array3 = array1d[array1d > 5]   # array1d[6,7,8,9]
+print("array1d > 5 불린 인덱싱 결과 값: ", array3)
+
+    ## np.sort : 원본이 정렬되는것은 아님
+org_array = np.array([3,1,5,9])
+print("원본 행렬: ", org_array)
+sort_array1 = np.sort(org_array)
+print("np.sort() 호출 후 반환된 정렬 행렬: ", sort_array1)
+print("np.sort() 호출 후 원본 행렬: ",org_array)
+
+    ## axis = 0 : 행방향
+    ## axis = 1 : 열방향
+array2d = np.array([[8,12],
+                    [7,1]])
+sort_array2d_axis0 = np.sort(array2d,axis=0)
+print("row 방향으로 정렬:\n",sort_array2d_axis0)
+
+    ## np.argsort : 정렬된 인덱스 값을 가져옴
+org_array = np.array([3,1,5,9])
+sort_indices = np.argsort(org_array)
+print("행렬 정렬 시 원본 행렬의 인덱스: ",sort_indices)
+
+    ## np.dot : 행렬 내적
+A = np.array([[1,2,3],
+              [4,5,6]])
+B = np.array([[7,8],
+              [9,10],
+              [11,12]])
+dot_product = np.dot(A,B)
+print("행렬 내적 결과:\n", dot_product)
+
+    ## np.transpose : 행과 열을 바꿈(전치행렬)
+A = np.array([[1,2,3],
+              [4,5,6]])
+transpose_mat = np.transpose(A)
+print("A의 전치 행렬:\n",transpose_mat)
