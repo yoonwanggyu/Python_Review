@@ -1,0 +1,168 @@
+<02.29>
+
+## 19차시 : 판다스---------------------------------------------------------------------------------------
+
+    ## 표 형태의 데이터를 다루는 다양한 기느을 제공하고 있다
+import pandas as pd
+pd.read_csv("C:/Users/윤왕규/Desktop/python/알파코_온라인강의/실습 데이터_데이터 분석 기초/concat_1.csv")
+pd.read_csv("C:/Users/윤왕규/Desktop/python/알파코_온라인강의/실습 데이터_데이터 분석 기초/gapminder.tsv",sep="\t")
+
+
+## 20차시 : 시리즈와 데이터프레임 이해하기--------------------------------------------------------------------------
+
+    ## 열 : 시리즈
+    ## 표 : 데이터프레임
+
+    ## 시리즈 만들기
+dic = {"a":1,"b":2,"c":3}
+pd.Series(dic)
+
+list = ["홍길동","이순신","아이유"]
+s = pd.Series(list,index=["가","나","다"])    # index : 행 이름 설정
+type(s)
+s.index
+s.values
+
+    ## 데이터프레임 만들기
+dic = {"이름":["홍길동","이순신","아이유"],
+       "성별":["남자","남자","여자"],
+       "나이":[40,50,20]}
+d = pd.DataFrame(dic,index=["가","나","다"],columns=["성별","나이","이름"])
+d.columns
+d.index
+
+
+list = [["홍길동","남자",40],["이순신","남자",50],["아이유","여자",20]]
+s = pd.DataFrame(list,columns=["이름","나이","성별"])
+
+## 21차시 : 판다스 통계 함수 맛보기-----------------------------------------------------------
+
+    ## 각 출생년도 별로 기대수명 평균 구하기
+a = pd.read_csv("C:/Users/윤왕규/Desktop/python/알파코_온라인강의/실습 데이터_데이터 분석 기초/gapminder.tsv",sep="\t")
+
+    ## Groupby(), melt(), to_datetime()
+    ## count : 누락값을 제외한 데이터 수
+    ## size : 누락값을 포함한 데이터 수
+    ## describe : 요약 통계량
+
+    ## 집단화 하고 싶은 열이름
+result1 = a.groupby("year")["lifeExp"].mean()   # 연도별 평균 기대수명
+result2 = a.groupby(["year","continent"])["lifeExp"].mean()  # 연도별/대륙별 평균 기대수명
+
+result3 = a.groupby("continent")["country"].nunique()  # 대륙별 나라 몇개(nunique() : 중복제외)
+
+## 22차시 : 시리즈와 데이터프레임 다루기-------------------------------------------------------------------
+ 
+    ## 행,열에 접근하기
+    ## loc : 행 이름으로 접근하기
+    ## iloc : 행 순서로 접근하기
+
+    ## 데이터프레임에서 내가 원하는 행만 추출하기
+    ## df[조건]
+    ## df[(조건1) & (조건2)]
+    ## df[(조건1) | (조건2)]
+
+    ## 데이터프레임의 머리 부분 추출
+    ## df.head(n=10)
+
+    ## 데이터프레임의 꼬리 부분 추출
+    ## df.tail(n=10)
+
+    ## 데이터프레임 모양 확인
+    ## df.shape
+
+    ## 데이터프레임의 열 이름 확인
+    ## df.columns
+
+    ## 데이터프레임의 열 자료형 확인
+    ## df.dtypes
+
+    ## 데이터프레임의 정보 확인
+    ## df.info()
+
+    ## 시리즈 중복데이터 삭제하기
+    ## s.drop_duplicates()
+    ## df.drop_duplicates()
+
+    ## 시리즈 특정 값 바꾸기
+    ## s.replace(값,변경값)
+
+    ## 시리즈 랜덤 샘플 추출
+    ## s.sample(n)
+
+    ## 정렬하기
+    ## s.sort_values()                 오름차순
+    ## s.sort_values(ascending=False)  내림차순
+    ## s.sort_index()      행 번호 정렬
+    ## s.sort_index(ascending=False)
+
+    ## 시간 데이터 변환
+    ## pd.to_datetime() : 문자열로 된 날짜 데이터를 시간 데이터로 변환
+
+person = pd.read_csv("C:/Users/윤왕규/Desktop/python/알파코_온라인강의/실습 데이터_데이터 분석 기초/person_info.csv",encoding='euc-kr')
+person["이름"]
+person[["이름","직업"]]
+person.loc[0]   # 행 이름이 0인 행
+person.iloc[0]  # 0번째 행 
+person.iloc[-1]
+person.loc[[0,5],["이름","직업"]]
+person.iloc[[0,5],[0,4]]
+
+    ## datetime 타입으로 변환!!
+person.info()
+person["출생일"] = pd.to_datetime(person["출생일"])
+person["사망일"] = pd.to_datetime(person["사망일"])
+person["생존일"] = person["사망일"] - person["출생일"]
+person
+person["출생일"].dt.year
+person["출생일"].dt.month
+person["출생일"].dt.day
+
+person.index
+person.columns
+
+name = person["이름"]
+name.replace("홍길동","강동원")
+
+age = person["나이"]
+age.max()
+age.min()
+age.mean()
+
+person
+person[(person["직업"] == "연구원") & (person["나이"] > person["나이"].mean())]
+
+## 23차시 : 데이터를 저장하고 불러오는 방법
+
+    ## csv 파일 불러오기
+    ## pd.read_csv(파일이름.csv)
+    ## 매개변수
+    ## encoding : 문자표현방식
+    ## sep : 데이터를 읽어올 때 구분자
+
+    ## csv 파일로 저장하기
+    ## df.to_csv(파일이름.csv)
+    ## 매개변수
+    ## index=True/Fasle : 인덱스 유무(행번호 표시,지우기)
+
+    ## tsv 파일 불러오기
+    ## pd.read_csv(파일이름.tsv,sep="\t")
+
+    ## tsv 파일로 저장하기
+    ## df.to_csv(파일이름,sep="\t")
+
+    ## 엑셀 파일 불러오기
+    ## pd.read_excel(파일이름.xlsx,sheet_name=시트이름)
+
+    ## 엑셀 파일로 저장하기
+    ## df.to_excel(파일이름.xlsx)
+
+    ## pickle 파일 불러오기
+    ## pd.read_pickle(파일이름.pickle)
+
+    ## pickle 파일로 저장하기
+    ## df.to_pickle(파일이름.pickle)
+
+    ## 대표적 인코딩 : utf-8, cp949, euc-kr
+person = pd.read_csv("C:/Users/윤왕규/Desktop/python/알파코_온라인강의/실습 데이터_데이터 분석 기초/person_info.csv",encoding='euc-kr')
+person.to_excel("mydata.xlsx",index=False)
