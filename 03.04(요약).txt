@@ -1,0 +1,235 @@
+<03.04>
+
+## 24차시 : 데이터 시각화가 필요한 이유----------------------------------------------------------------
+
+    ## 수치가 같아도 그림이 다르다!!
+
+#%%
+import matplotlib.pyplot as plt
+import seaborn as sns  # 연습용 데이터,가시화
+import pandas as pd
+
+    ## figure() : 그림을 그리기 위한 도화지 준비
+fig = plt.figure()
+ax1 = fig.add_subplot(2,2,1)
+ax2 = fig.add_subplot(2,2,2)
+ax3 = fig.add_subplot(2,2,3)
+ax4 = fig.add_subplot(2,2,4)
+
+    ## seaborn에 있는 내장 데이터 불러오기
+anscombe = sns.load_dataset("anscombe")
+data1 = anscombe[anscombe['dataset'] == 'I']
+data2 = anscombe[anscombe['dataset'] == 'II']
+data3 = anscombe[anscombe['dataset'] == 'III']
+data4 = anscombe[anscombe['dataset'] == 'IV']
+
+fig = plt.figure()
+ax1 = fig.add_subplot(2,2,1)
+ax2 = fig.add_subplot(2,2,2)
+ax3 = fig.add_subplot(2,2,3)
+ax4 = fig.add_subplot(2,2,4)
+
+    ## 산점도
+ax1.scatter(data1['x'],data1['y'])
+ax2.scatter(data2['x'],data2['y'])
+ax3.scatter(data3['x'],data3['y'])
+ax4.scatter(data4['x'],data4['y'])
+fig
+
+    ## 겹쳐그리기
+ax1.plot(data1['x'],data1['y'],'red')
+ax2.plot(data2['x'],data2['y'],'red')
+ax3.plot(data3['x'],data3['y'],'red')
+ax4.plot(data4['x'],data4['y'],'red')
+fig
+
+    ## 소제목
+ax1.set_title('Data1')
+ax2.set_title('Data2')
+ax3.set_title('Data3')
+ax4.set_title('Data4')
+fig
+
+    ## 제목
+fig.suptitle("Main Data")
+fig
+
+    ## 겹치는 부분 벌려줘
+fig.tight_layout()
+fig
+
+## 25차시 : matplotlib 활용-------------------------------------------------------------
+
+import matplotlib.pyplot as plt
+import seaborn as sns 
+import pandas as pd
+
+fig = plt.figure()    # 빈 도화지 생성
+ax1 = fig.add_subplot(1,1,1)
+ax1.set_title("Data")
+ax1.set_xlabel("x")
+ax1.set_ylabel("y")
+
+    ## 데이터 가져오기
+tips = sns.load_dataset("tips")
+    
+    ## 히스토그램
+fig = plt.figure()
+ax1 = fig.add_subplot(1,1,1)
+ax1.hist(tips["total_bill"],bins=10)
+ax1.hist(tips["total_bill"],bins=20)  # 자동으로 덧붙여줌
+
+    ## 산점도
+fig = plt.figure()
+ax1 = fig.add_subplot(1,1,1)
+ax1.scatter(tips["total_bill"],tips["tip"],c=tips["size"],s=tips["size"]*20,alpha=0.5)  # size별 다른 색상 / 크기 다르게
+ax1.set_xlabel("total_bill")
+ax1.set_ylabel("tip")
+ax1.set_title("Scatter")
+
+    ## 선그래프
+fig = plt.figure()
+ax1 = fig.add_subplot(1,1,1)
+ax1.plot(tips["total_bill"])
+
+    ## 박스그래프
+male = tips[tips["sex"] == 'Male']
+female = tips[tips["sex"] == 'Female']
+fig = plt.figure()
+ax1 = fig.add_subplot(1,2,1)
+ax2 = fig.add_subplot(1,2,2)
+ax1.boxplot(male["total_bill"])
+ax1.set_xlabel("Male")
+ax2.boxplot(female["total_bill"])
+ax2.set_xlabel("Female")
+
+## 26차시 : seaborn 활용---------------------------------------------------------------
+
+    ## 자동으로 예쁜 그림을 그려줌 / 커스터마이징이 어려움
+import matplotlib.pyplot as plt
+import seaborn as sns 
+import pandas as pd
+
+    ## 단변량 = 일변량 : 변수 하나
+    ## 다변량 = 이변량 : 변수 두개 
+
+    ## 매개변수 : hue, col, facetgrid
+
+    ## 데이터 불러오기
+tips = sns.load_dataset("tips")
+
+    ## 히스토
+sns.histplot(tips["total_bill"])
+
+    ## 밀도함수
+sns.kdeplot(tips["total_bill"])
+sns.kdeplot(tips["total_bill"],tips["tip"],shade=True)
+
+    ## 선형회귀
+sns.lmplot(x="total_bill",y="tip",data=tips)
+
+sns.jointplot(x="total_bill",y="tip",data=tips,kind='hex')  # hex : 육각형
+
+    ## 박스
+sns.boxplot(x="day",y="total_bill",data=tips,hue="sex")
+
+    ## 바이올린
+sns.violinplot(x="time",y="total_bill",data=tips,hue="sex",split=True)
+
+    ## 상관
+sns.pairplot(tips,hue="sex")
+
+    ##
+anscombe = sns.load_dataset("anscombe")
+sns.lmplot(x="x",y="y",data=anscombe,col="dataset",col_wrap=2)  # 최대 2열까지 표현
+
+    ## 
+sns.set_style("whitegrid")
+facet = sns.FacetGrid(tips,col="time",hue="sex",row="smoker")
+facet.map(plt.scatter,"total_bill","tip")
+
+## 27차시 : pandas 활용-----------------------------------------------------------------
+
+    ## 아주 간단한 그래프 
+
+import seaborn as sns 
+import pandas as pd
+
+tips = sns.load_dataset("tips")
+
+    ## 히스토
+sns.set_style("white")
+fig = plt.figure()
+ax = fig.add_subplot(1,1,1)
+ax = tips["total_bill"].plot.hist()
+
+    ## 여러 열 접근 가능
+ax = fig.add_subplot(1,1,1)
+ax = tips[["total_bill","tip"]].plot.hist(alpha=0.5,bins=20)
+
+    ## 밀도함수
+ax = fig.add_subplot(1,1,1)
+ax = tips["tip"].plot.kde()
+
+    ## 산점도
+ax = fig.add_subplot(1,1,1)
+ax = tips.plot.scatter(x="total_bill",y="tip",c="size")  # c : 색깔표현
+
+    ## 육각형 모양 산점도
+ax = fig.add_subplot(1,1,1)
+ax = tips.plot.hexbin(x="total_bill",y="tip",gridsize=10)
+
+    ## 원형 그래프
+ax = fig.add_subplot(1,1,1)
+ax = tips.plot.pie(y="size")
+
+    ## 박스 그래프
+tips.plot.box()   # 숫자인 변수만 나타남
+
+## 28차시 : 여러개의 데이터프레임을 하나로 합치는 방법--------------------------------------------------------------
+
+import pandas as pd
+
+    ## concat() 함수
+    ## pd.concat()
+
+    ## 행 이름을 기준으로 합치기 : axis = 1(열방향 ->)
+    ##                          : axis = 0(행방향)
+
+    ## 행 이름 바꾸기 df.index = []
+    ## 열 이름 바꾸기 df.colummns = []
+
+df1 = pd.read_csv("C:/Users/윤왕규/Desktop/python/알파코_온라인강의/실습 데이터_데이터 분석 기초/concat_1.csv")
+df2 = pd.read_csv("C:/Users/윤왕규/Desktop/python/알파코_온라인강의/실습 데이터_데이터 분석 기초/concat_2.csv")
+df3 = pd.read_csv("C:/Users/윤왕규/Desktop/python/알파코_온라인강의/실습 데이터_데이터 분석 기초/concat_3.csv")
+
+concat1 = pd.concat([df1,df2,df3],ignore_index=True)  # axis = 0 기본값
+concat1.loc[6]
+
+concat2 = pd.concat([df1,df2,df3],axis=1)
+concat2["A"]
+
+    ## 열이름이 다른 데이터프레임이 있다면 합쳐줄까? => 합쳐줌 -> 없는 값은 NaN 표시
+df2.index = [0,3,5,7]   # 행이름 바꾸기
+concat3 = pd.concat([df1,df2,df3],axis=1)  # 열방향
+
+df2.columns = ["A","B","E","F"]  # 열 이름 바꾸기
+concat4 = pd.concat([df1,df2,df3],axis=0)  # 행방향
+
+## 29차시 : 스마트하게 데이터프레임 합치는 방법-------------------------------------------------------------------------------------------
+
+import pandas as pd
+
+    ## merge() : 특정 열을 기준으로 데이터프레임을 합치는 방법
+    ## df1.merge(df2,left_on = df1의 기준열,right_on = df2의 기준열)
+    
+person = pd.read_csv("C:/Users/윤왕규/Desktop/python/알파코_온라인강의/실습 데이터_데이터 분석 기초/survey_person.csv")
+site = pd.read_csv("C:/Users/윤왕규/Desktop/python/알파코_온라인강의/실습 데이터_데이터 분석 기초/survey_site.csv")
+survey = pd.read_csv("C:/Users/윤왕규/Desktop/python/알파코_온라인강의/실습 데이터_데이터 분석 기초/survey_survey.csv")
+visited = pd.read_csv("C:/Users/윤왕규/Desktop/python/알파코_온라인강의/실습 데이터_데이터 분석 기초/survey_visited.csv")
+
+merge1 = visited.merge(site,left_on="site",right_on="name")
+del merge1['name']
+
+merge2 = person.merge(survey,left_on="ident",right_on="person")
+del merge2["person"]
