@@ -1,0 +1,202 @@
+<03.05>
+
+## 30차시 : 누락값 처리---------------------------------------------------------------------------------------------------------------
+
+    ## 누락값 만들기
+    ## import numpy import NAN NaN nan
+
+    ## 누락값은 비교할 수 없음
+
+    ## pd.isnull
+    ## pd.notnull
+
+    ## 누락값 개수 구하기
+    ## 1) 데이터 개수 - df.count()
+    ## 2) np.count_nonzero(데이터.isnull())
+
+    ## 누락값 채우기 : fillna(값)
+    ## fillna(method = "ffill")
+    ## fillna(method = "bfill")
+    ## df.interpolate() : 흐름에 따라 알아서 채워줌
+
+import pandas as pd
+
+ebola = pd.read_csv("C:/Users/윤왕규/Desktop/python/알파코_온라인강의/실습 데이터_데이터 분석 기초/country_timeseries.csv")
+ebola.info()
+    
+    ## 누락값 개수
+122 - ebola.count()
+
+    ## 대표적 방법 -> 흐름에 따라 채우고 -> 앞에 값 그대로 채우고 -> 뒤에 값 그대로 채우기
+ebola2 = ebola.interpolate()
+ebola2 = ebola2.fillna(method="ffill")
+ebola2 = ebola2.fillna(method="bfill")
+
+    ## 예시
+from numpy import nan
+dates = ["12/1/2016","12/3/2016","12/4/2016","12/10/2016"]
+dates = pd.to_datetime(dates)    # 시계열로 바꿈
+s = pd.Series([1,nan,nan,10],index=dates)  # 누락값 존재
+s.interpolate(method="time") # 흐름에 맞게 채웠어도 문제가 발생->method를 바꾸기
+
+## 31차시 : 열에 있는 값을 행으로 내리는 방법--------------------------------------------------------------------------------------
+
+    ## melt : 지정한 열의 데이터를 모두 행으로 내려주는 기능
+    ## pd.melt(데이터,id_vars,var_name,value_name)
+    ## id_vars : 고정할 열
+    ## var_name : 위치를 변경한 열의 이름
+    ## value_name : 위치를 변경한 열의 데이터를 저장한 열의 이름
+
+    ## 열 분할하기
+    ## 분할 : 시리즈.str.split(기준)
+    ## 수집 : 시리즈.str[인덱스]
+
+import pandas as pd
+
+pew = pd.read_csv("C:/Users/윤왕규/Desktop/python/알파코_온라인강의/실습 데이터_데이터 분석 기초/pew.csv")
+df1 = pd.melt(pew,id_vars=["religion"],var_name = "income",value_name="count")
+
+billboard = pd.read_csv("C:/Users/윤왕규/Desktop/python/알파코_온라인강의/실습 데이터_데이터 분석 기초/billboard.csv")
+df2 = pd.melt(billboard,id_vars=["year","artist","track","time","date.entered"],var_name="week",value_name="rating")
+
+ebola = pd.read_csv("C:/Users/윤왕규/Desktop/python/알파코_온라인강의/실습 데이터_데이터 분석 기초/country_timeseries.csv")
+df3 = pd.melt(ebola,id_vars=["Date","Day"])
+
+ebola_split = df3["variable"].str.split("_")  # _ 을 기준으로 자름
+state = ebola_split.str[0]    # ebola_split에 0번째 열을 가져옴
+country = ebola_split.str[1]  # ebola_split에 1번째 열을 가져옴
+
+df3["state"] = state
+df3["country"] = country
+del df3["variable"]
+df3
+
+## 32차시 : 행에 있는 값을 열로 올리는 방법--------------------------------------------------------------------
+
+    ## melt와는 반대로
+
+    ## pivot_table(
+        # index = 고정하고싶은 열,
+        # columns = 열로 올리고싶은 행,
+        # values = 새로 올라간열이 가지게 될 값,
+        # dropna = True/False)
+
+import pandas as pd
+weather = pd.read_csv("C:/Users/윤왕규/Desktop/python/알파코_온라인강의/실습 데이터_데이터 분석 기초/weather.csv")
+
+weather1 = pd.melt(weather,id_vars=["id","year","month","element"],var_name="day",value_name="temp")   # 1차 가공 열을 행으로 내림
+
+weather2 = weather1.pivot_table(index=["id","year","month","day"],columns="element",values="temp",dropna=False)  # 2차 가공 행을 열로 올림 / dropna = True na값 없앰
+weather3 = weather2.reset_index()
+
+## 33차시 : 데이터에 순위를 매기는 방법-------------------------------------------------------------------------------------------------------------
+
+    ## rank()
+    ## df[열].rank(method= "" , ascending=True/False)
+
+    ## average : 동점 관측치 평균부여
+    ## min : 동점 관측치 최소순위
+    ## max : 동점 관측치 최대순위
+    ## first : 동점 관측치 먼저 나타나는 관측치부터 순위부여
+    ## dense : min과 같으나 순위가 1씩 증가
+
+import pandas as pd
+
+df = pd.read_excel("C:/Users/윤왕규/Desktop/python/알파코_온라인강의/실습 데이터_데이터 분석 기초/성적 처리.xlsx",sheet_name="Sheet1")
+df.groupby("반").mean()
+
+df["총합"] = df.iloc[:,2:].sum(axis=1)
+df["평균"] = df["총합"] / 5
+df["순위"] = df["평균"].rank(method="average",ascending=False)
+df
+
+## 34차시 : 상관분석------------------------------------------------------------------------------------------------------------------------------
+
+    ## 두 변수 간에 어떤 선형적 관계를 가지는지 분석하는 기법으로 상관계수를 이용하여 측정
+
+    ## 피어슨 상관계수
+    ## import scipy.stats as stats
+    ## stats.pearsonr(X,Y) [상관계수,P-value]
+    ## p-value : 상관관계가 없다에 대한 검정 결과를 확률로 표현
+
+from sklearn.datasets import load_diabetes  # 당뇨병 데이터
+import seaborn as sns
+import pandas as pd
+import scipy.stats as stats  # 상관계수를 분석하기 위해서
+
+diabetes = load_diabetes() # 딕셔너리 형태
+diabetes.keys()
+data,target = diabetes["data"],diabetes["target"]
+data.shape  # 데이터가 총 442개, 10개의 특성
+    
+    ## 데이터프레임으로 변환
+df = pd.DataFrame(data, columns = diabetes["feature_names"])
+df["target"] = target  # 당뇨병 진행률 : target
+df
+
+    ## target과 상관계수가 높은 변수 찾기
+x = df["age"]
+y = df["target"]
+stats.pearsonr(x,y)  
+
+x = df["sex"]
+y = df["target"]
+stats.pearsonr(x,y)  
+
+x = df["bmi"]
+y = df["target"]
+stats.pearsonr(x,y)  
+
+df.corr()
+sns.heatmap(df.corr(),annot=True)
+
+## 35차시 : 정규표현식--------------------------------------------------------------------------------------------------
+
+    ## 어떤 문자열에서 내가 원하는 패턴을 찾는 기능
+
+    ## 메타문자
+    ## + () []
+
+    ## [] : []사이의 문자들과 매치
+    ## [abc],[a-c] 중 하나의 문자와 매치
+    ## [0-9] : 0부터 9까지 모든 숫자
+    ## [a-zA-Z] : 영어
+    ## [가-힣] : 한글
+
+    ## 문자클래스
+    ## \d : 숫자
+    ## \D : 숫자가 아닌 것
+    ## \s : 공백
+    ## \w : 문자+숫자
+    ## \W : 문자+숫자가 아닌 것
+
+    ## 점(.) : 모든 것
+    ## a.b라면 aab,a()b 등 모두 가능
+
+    ## 반복(*) : 0부터 무한대로 반복될 수 있다는 뜻
+    
+    ## 반복(+) : 1부터 무한대로 반복될 수 있다는 뜻
+
+    ## 반복{} 
+    ## {n} : 반드시 n번 반복
+    ## [ca{1,3}t] = cat, caat, caaat 매칭 가능
+
+    ## ? : 있어도 되고, 없어도 된다라는 의미
+
+    ## 정규표현식 라이브러리
+import re
+
+f = open("C:/Users/윤왕규/Desktop/python/알파코_온라인강의/실습 데이터_데이터 분석 기초/코로나.txt","rt",encoding="utf-8")
+covid = f.read()
+f.close()
+print(covid) 
+
+re.findall("[가-힣]+",covid) # 1글자 이상인 한글을 찾고싶다
+re.findall("[가-힣]{2}",covid) # 2글자로만 된 한글을 찾고싶다
+re.findall("[가-힣]{2,}",covid) # 2글자 이상만
+
+re.findall("[a-zA-Z]+",covid) # 1개 이상인 영어
+re.findall("[a-zA-Z0-9]+",covid) # 1개 이상인 영어,숫자
+
+    ## 어떤 문자가 1개이상 존재하고 19로 끝나는 문자 찾기
+re.findall("\w+19",covid)
