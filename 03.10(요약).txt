@@ -1,0 +1,217 @@
+<03.10>
+
+## 36차시 : 인터넷에 있는 데이터를 수집하는 방법---------------------------------------------------------------------
+
+    ## 데이터 크롤링
+
+    ## 라이브러리
+    ## requests
+    ## bs4의 BeatifulSoup 클래스
+    ## time
+    ## pandas
+
+    ## request.get() 으로 가져오면 문자열로 된 HTML로 되어있음
+    ## 진짜 HTML로 바꿔야한다
+    ## 이때 BeautifulSoup 활용
+
+    
+
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+import time
+
+url = requests.get("https://search.daum.net/search?w=tot&DA=YZR&t__nil_searchbox=btn&q=%EB%A1%9C%EB%98%90")
+    # 200 : 문제없음 / 400번대 : 존재하지않는페이지 . 500번대 : 로그인처리, 잠금
+html = BeautifulSoup(url.text) # 모든 데이터가 다 들어있다
+
+    ## 1109회 에서 1109만 가져오자
+    ## span 이라는 태그명에 f_red라는 class 안에 들어있다
+current = int(html.find('span',class_ = 'f_red').text.replace("회", ""))
+
+    ## 당첨번호만 가져오기
+lotto = html.find('div',class_ = 'lottonum').find_all('span')
+del lotto[-2]  # 보너스 지우기
+del lotto[-2]  # 보너스 지우기
+box = []
+for i in lotto:
+    box.append(int(i.text))
+box
+
+## 37차시 : 인터넷에 있는 표를 데이터프레임으로 가져오는 방법---------------------------------------------------------------------------------
+
+    ## 표 수집
+    ## pd.read_html(str(HTML))
+
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+import time
+
+    ## 코스피 1페이지만 가져오는 법
+    ## 1) 주소 복사
+url = requests.get("https://finance.naver.com/sise/sise_market_sum.naver?sosok=0&page=1")
+    ## 2) BeautifulSoup으로 text만 가져오고 변환
+html = BeautifulSoup(url.text)
+    ## 3) 가져올 표가 속해있는 정보 입력 / table 태그명에 type_2 클래스
+table = html.find("table",class_='type_2')
+    ## 5) 문자열로 바꾸고 파이썬 표로 변환 -> 일단 리스트로 되어있음 / 인터넷 상에 보이는 실선이나 정보가 아닌거는 NaN으로 뜸
+table = pd.read_html(str(table))[0]
+    ## 6) null값이 아닌거에만 접근
+table = table[table["종목명"].notnull()]
+    ## 7) 필요없는 열 제거
+del table["N"]
+del table["토론실"]
+
+    ## 코스피 모든 페이지 가져오기
+    ## 사이트에서 맨뒤 누르고 검사를 누르면 정보 뜸 -> 그 정보에서 맨뒤 페이지인 44만 가져오기
+kospi_page = int(html.find("td",class_="pgRR").find("a")["href"].split("=")[-1])
+
+total = []
+for i in range(1,kospi_page + 1):
+        url = requests.get("https://finance.naver.com/sise/sise_market_sum.naver?sosok=0&page={}".format(i))
+        html = BeautifulSoup(url.text)
+        
+        table = html.find("table",class_='type_2')
+        table = pd.read_html(str(table))[0]
+        table = table[table["종목명"].notnull()]
+        
+        del table["N"]
+        del table["토론실"]
+
+        total.append(table)
+        time.sleep(1)   # 천천히 가져오기 위해 1초정도 쉰다
+
+        print("{}번째 페이지를 가져오는 중입니다....".format(len(total)))
+
+kospi = pd.concat(total,ignore_index=True)  # 데이터 합치기
+kospi.to_excel("kospi.xlsx")  # 엑셀로 변환
+
+    ## 코스닥 전체 가져오기
+url2 = requests.get("https://finance.naver.com/sise/sise_market_sum.naver?sosok=1")
+html2 = BeautifulSoup(url2.text)
+table2 = html2.find("table",class_="type_2")
+table2 = pd.read_html(str(table2))[0]
+table2 = table2[table2["종목명"].notnull()]
+del table2["N"]
+del table2["토론실"]
+table2
+
+kosdak_page = int(html2.find("td",class_="pgRR").find("a")["href"].split("=")[-1])
+
+total2 = []
+for i in range(1,kosdak_page+1):
+    url2 = requests.get("https://finance.naver.com/sise/sise_market_sum.naver?sosok={}".format(i))
+    html2 = BeautifulSoup(url2.text)
+
+    table2 = html2.find("table",class_="type_2")
+    table2 = pd.read_html(str(table2))[0]
+    table2 = table2[table2["종목명"].notnull()]
+
+    del table2["N"]
+    del table2["토론실"]
+
+    total2.append(table2)
+    time.sleep(1)
+
+    print("{}번째 페이지를 가져오는 중입니다..".format(len(table2)))
+
+## 38차시 : 인터넷 뉴스 기사 가져오는 방법--------------------------------------------------------------------------------------
+    
+    ## 크롤링은 항상 같은 것을 가져와야 한다(같은 사이트)
+
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+import time
+
+total = []
+
+url = requests.get("https://search.naver.com/search.naver?ssc=tab.news.all&where=news&sm=tab_jum&query=%ED%95%9C%EA%B5%AD")
+html = BeautifulSoup(url.text)
+news = html.find("div",class_="group_news").find_all("li",class_="bx")
+
+
+for i in news:
+    title = i.find("a",class_="news_tit").text
+    content = i.find("a",class_="api_txt_lines dsc_txt_wrap").text
+
+    total.append([title,content])
+    print(total)
+
+df = pd.DataFrame(total,columns =["제목","요약"])
+
+## 39차시 : 수집한 뉴스 기사로 빈도분석하고 워드클라우드 만들기--------------------------------------------------------------------------
+
+words = ["한국","한국","일본","중국"]
+dic = {}
+for i in words:
+    if i in dic:
+        dic[i] += 1
+    else:
+        dic[i] = 1
+dic
+
+from wordcloud import WordCloud
+    
+    ## 한글 폰트 // 그리고 싶은 모양
+
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+import time
+import matplotlib.pyplot as plt
+import numpy as np
+from PIL import Image    # 이미지 데이터 불러오고 처리하는 라이브러리
+
+    ## 빈도분석
+import re
+
+text = ""
+for i in total:
+    text += i[0]   ## 0번째는 제목
+    text += '\n'
+    text += i[1]   ## 1번째는 요약
+    text += '\n'   ## 마치 한문장으로 만들어줌
+
+len(text)    # 글자 수 확인        
+
+box = re.findall("[가-힣]{2,}",text) # 한글로 2글자 뽑기
+len(box)
+
+dic = {}
+for i in box:
+    if i in dic:
+        dic[i] += 1
+    else:
+        dic[i] = 1
+dic
+     
+    
+    ## wordcloud 만들기
+wc = WordCloud(font_path = "C:/Users/윤왕규/Desktop/python/알파코_온라인강의/실습 데이터_데이터 분석 기초/BMDOHYEON_ttf.ttf",
+               background_color = "white")
+cloud = wc.generate_from_frequencies(dic)
+    ## wordcloud 그리기
+plt.imshow(cloud)
+    
+    ## 하트 이미지 가져오기
+image = Image.open("C:/Users/윤왕규/Desktop/python/알파코_온라인강의/실습 데이터_데이터 분석 기초/하트.png")
+    ## 하트를 행렬로 변환
+image = np.array(image)
+    ## 초기에 mask = image 로 설정
+wc = WordCloud(font_path = "C:/Users/윤왕규/Desktop/python/알파코_온라인강의/실습 데이터_데이터 분석 기초/BMDOHYEON_ttf.ttf",
+               background_color = "white",
+               mask=image)
+cloud = wc.generate_from_frequencies(dic)
+plt.imshow(cloud)
+
+## 40차시 : 네트워크 반응을 이용해서 데이터 크롤링하기---------------------------------------------------------------------------------------------
+
+    ## Ctrl + Shift + i
+import json
+import requests
+import pandas as pd
+from bs4 import BeautifulSoup
+
+    ## json.loads()을 사용해 가져오기
