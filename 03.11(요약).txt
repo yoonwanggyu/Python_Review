@@ -1,0 +1,147 @@
+<03.11>
+
+## 44차시 : 머신러닝에 필요한 수학 개념--------------------------------------------------------------------------------
+
+    # 데이터는 행렬 모양이어야 함 => 병렬 계산을 하기 위함
+
+    # 선형대수(스칼라,벡터,행렬,텐서)
+    # import numpy as np
+
+    # 일차함수
+    # 이차함수
+    # 연립방정식 : np.linalg.solve(a,b)
+
+    # 함수
+
+    # 미분 : 기울기를 구하는 것
+    # import sympy
+
+## 45차시 : 머신러닝에 필요한 확률과 통계---------------------------------------------------------------------------------------
+
+    # 평균 : np.mean(x)
+    # 중앙값 : np.median(x)
+    # 최빈값 : pd.Series().mode()
+    # 편차 : x - mean
+    # 분산 : np.var(x)
+    # 표준편차 : np.sqrt(np.var(x))
+
+    # 데이터 정규화 : 데이터를 통일된 지표로 변환하는 것
+
+    # 데이터의 표준화
+    # z = (x - np.mean(x)) / np.std(x)
+    # 표준화를 하면 평균이 0, 표준편차가 1이 된다
+
+    # 산점도 : 두 데이터 사이의 관게를 나타내는 지표
+
+    # 상관계수 : -1 ~ 1 사이의 값을 가짐.
+    # df.corr()
+
+    # 모집단과 표본
+
+    # 확률 : 취하는 값과 그 값이 나올 확률이 결정되어 있는 것을 확률변수라고 한다
+    # 절대적으로 0이상으로, 모든 확률을 더하면 1이 되어야 한다
+
+## 46차시 : 지도학습에 필요한 데이터 가공하기--------------------------------------------------------------------------------------
+
+    # 머신러닝(지도학습, 비지도학습, 강화학습)
+
+    # 지도학습 : 문제와 정답을 모두 알려주고 공부시키는 방법
+
+    # 문제집 : 2차원 행렬
+    # 정답지 : 1차원 행렬
+
+import pandas as pd
+fish = pd.read_csv("C:/Users/윤왕규/Desktop/python/알파코_온라인강의/실습 데이터_머신러닝 및 딥러닝 기초/fish.csv")
+    # 1) 컴퓨터가 원하는 모양으로 바꾸기
+bream = fish[fish["class"]==1]
+smelt = fish[fish["class"]==0]
+    
+    # 2) 리스트로 변환해 데이터가 계산이 되지않게 함
+bream_length = list(bream["length"])
+bream_weight = list(bream["weight"])
+smelt_length = list(smelt["length"])
+smelt_weight = list(smelt["weight"])
+
+    # 3) 그림으로 확인
+import matplotlib.pyplot as plt
+plt.scatter(bream_length,bream_weight)
+plt.scatter(smelt_length,smelt_weight)
+plt.legend(['bream','smelt'])
+
+    # 4) 컴퓨터에 학습시키자
+    # 문제집(2차원 행렬) : 길이,무게
+    # 정답지(1차원 행렬) : 도미,빙어(생선종류)
+    # bream = 도미(35마리) , smelt = 빙어(14마리)
+
+    # 앞에부터 도미 -> 빙어 순
+length = bream_length + smelt_length
+weight = bream_weight + smelt_weight
+
+    # 문제집 만들기 : 길이랑 무게를 하나로 묶기
+data = []
+for i in range(49):
+    data.append([length[i],weight[i]])
+
+data
+    
+    # 정답지 만들기 
+target = [1] * 35 + [0] * 14
+print(target)
+
+    # 문제집과 정답지가 리스트 이므로 넘파이로 행렬로 변환
+import numpy as np
+data = np.array(data)        # 2차원
+target = np.array(target)    # 1차원
+
+## 47차시 : K 최근접 이웃 분류 모델 소개--------------------------------------------------------------------------------------------
+
+    # 가장 가까운 데이터를 탐색해서 값을 예측하는 모델
+    # 새로운 입력으로 들어온 데이터를 특정값으로 분류하는데 현재 데이터와 가장 가까운 K개의 데이터를 찾아
+    # 가장 많은 분류값으로 현재의 데이터를 분류하는 알고리즘
+
+    # 최적의 이웃수를 찾는 과정이 중요
+
+from sklearn.neighbors import KNeighborsClassifier
+import pandas as pd
+fish = pd.read_csv("C:/Users/윤왕규/Desktop/python/알파코_온라인강의/실습 데이터_머신러닝 및 딥러닝 기초/fish.csv")
+
+    # knn = KNeighborsClassifier()  1) 모델생성
+    # knn.fit(문제집,정답지)         2) 학습
+    # knn.score(문제집,정답지)       3) 성능 평가
+    # knn.predict(data)             4) 예측
+
+    # 간단하게 seaborn으로 그리기
+import seaborn as sns
+sns.set_style('whitegrid')
+sns.lmplot(x='length',y='weight',data=fish,hue='class',fit_reg=True)
+
+    # 데이터 간단하게 뽑기
+    # 1)
+length = fish['length'].to_numpy()
+weight = fish['weight'].to_numpy()
+    # 2)
+data = []                                # 문제지
+for i in range(49):
+    data.append([length[i],weight[i]])
+    # 3)
+data
+
+target = fish['class'].to_numpy()        # 정답지
+
+    # 모델 테스트(기본적으로 이웃을 5개 가져감)
+knn = KNeighborsClassifier()  # 모델 생성
+knn.fit(data,target)          # 데이터를 모델에 집어넣음
+knn.score(data,target)        # 몇점짜리 모델인가? (확률로 표현되기 때문에 1.0 = 100점) => 예측값과 실제값의 비율
+target                        # 실제값
+knn.predict(data)             # 예측값
+    # 길이가 35, 무게가 400이 class==1로 나오는지 확인(존재하지 않는 데이터임)
+knn.predict([[35,400]])
+knn.predict([[20,200]])
+knn.predict([[17,150]])
+
+    # 이웃수 조정하는 법 -> 1개부터 넣어서(홀수) 점수가 가장 높은 이웃수의 개수 보기
+for i in range(1,50,2):
+    knn = KNeighborsClassifier(n_neighbors=i)
+    knn.fit(data,target)
+    score = knn.score(data,target)
+    print("이웃수: {} // 점수 : {}".format(i,score))
