@@ -1,0 +1,248 @@
+<03.11>
+
+## 48차시 : 데이터를 분할해서 학습 해야하는 이유---------------------------------------------------------------------------------------------------------
+    
+    # 훈련데이터와 시험데이터를 만들고, 훈련데이터로만 학습하고, 시험데이터로 평가
+
+    # 최대한 훈련데이터에 많은 비율을 할당하는 것이 좋음
+    # train_test_split 사용
+
+    # 순서가 중요
+    # 훈련문제집, 시험문제집, 훈련정답지, 시험정답지 = train_test_split(문제집,정답지,test_size = ?)
+    # test_size 기본값이 75:25 비율
+
+import pandas as pd
+fish = pd.read_csv("C:/Users/윤왕규/Desktop/python/알파코_온라인강의/실습 데이터_머신러닝 및 딥러닝 기초/fish.csv")
+
+    # 문제집
+data = fish[['length','weight']].to_numpy()
+    # 정답지
+target = fish['class'].to_numpy()
+
+    # 모델 불러오기
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+
+    # 모델에 적용할 비율 설정
+train_input, test_input, train_target, test_target = train_test_split(data,target)
+
+    # 모델 테스트
+knn = KNeighborsClassifier()
+knn.fit(train_input,train_target)   # (훈련문제집,훈련정답지)로 모델 학습
+knn.score(test_input,test_target)   # (시험문제집,시험정답지)로 모델 평가보기 
+
+test_target                 # 실제값
+knn.predict(test_input)     # 예측값
+
+## 49차시 : 데이터 스케이링 해야 하는 이유--------------------------------------------------------------------------------------------------
+
+    # 데이터 전처리 과정
+    # 데이터 특성의 범위 또는 분포를 같게 만드는 작업
+
+    # 위 fish 데이터를 학습한 모델이 100점이라도 해도
+    # 길이는 5~20 까지의 범위이고
+    # 몸무게는 100~500 까지의 범위를 가지기 때문에
+    # 컴퓨터가 몸무게에 치중해서 학습하는 경향이 나타남
+    # 따라서, 데이터 스케일링 통해 같에 만드는 작업을 시행해야 함
+
+    # StandardScaler : 모든 특성을 평균을 0으로 표준편차를 1로 변환 / 이상치에 민감
+
+    # MinMaxScaler : 특성 중 가장 작은 값을 0, 가장 큰값을 1로 변환하여 0~1 사이의 값으로 만듦 / 이상치에 매우 민감
+
+    # RobustScaler : 중앙값과 사분위 값을 사용하여 중앙값을 빼고, 사분위 값으로 나눔 / 이상치의 영향을 최소화 할 수 있음
+
+
+import pandas as pd
+fish = pd.read_csv("C:/Users/윤왕규/Desktop/python/알파코_온라인강의/실습 데이터_머신러닝 및 딥러닝 기초/fish.csv")
+
+bream = fish[fish['class'] == 1]
+smelt = fish[fish['class'] == 0]
+
+import matplotlib.pyplot as plt
+plt.scatter(bream['length'],bream['weight'])
+plt.scatter(smelt['length'],smelt['weight'])
+plt.legend(['bream','smelt'])
+
+plt.scatter(25,120,marker='^')      # 이 친구는 과연 bream일까? smelt일까?
+
+    # 문제집
+data = fish[['length','weight']].to_numpy()
+    # 정답지
+target = fish['class'].to_numpy()
+
+    # 모델 불러오기
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+
+    # 모델에 적용할 비율 설정
+train_input, test_input, train_target, test_target = train_test_split(data,target)
+knn = KNeighborsClassifier()
+knn.fit(train_input,train_target)   
+knn.score(test_input,test_target) 
+
+knn.predict([[25,120]]) # => 1(bream)이 맞으나 0(smelt)라고 잘못 예측함
+    
+    ## 과역 100점짜리 모델이 맞을까?
+    ## 표준화 실시
+
+    # 평균/표준편차 구하기
+import numpy as np
+mean = np.mean(train_input,axis=0)  # 행방향(아래로)
+std = np.std(train_input,axis=0)
+
+    # 표준화 실시
+train_scaled = (train_input - mean) / std
+test_scaled = (test_input - mean) / std
+
+    # 모델 다시 만들기
+knn = KNeighborsClassifier()
+knn.fit(train_scaled,train_target)
+knn.score(test_scaled,test_target)    # 이번에도 100점이 나옴
+
+new = ([25,120]-mean)/std
+knn.predict([new])   # => 1(bream) 정답 예측 성공!!
+
+## 50차시 : K최근접 이웃 회귀 모델 소개-----------------------------------------------------------------------------------------------
+
+    # 회귀 : 새로운 값에 대해서 가장 가까운 데이터 K개를 평균 낸 값으로 새로운 값을 예측
+
+    # 연속적 값을 예측해준다
+    
+    ## 생선의 길이만 가지고 무게를 예측
+    # 1) 데이터 가져오기
+import pandas as pd
+perch = pd.read_csv("C:/Users/윤왕규/Desktop/python/알파코_온라인강의/실습 데이터_머신러닝 및 딥러닝 기초/perch.csv")
+
+import matplotlib.pyplot as plt
+plt.scatter(perch['length'],perch['weight'])
+
+    # 2) 문제집 / 정답지 생성
+data = perch['length'].to_numpy()
+target = perch['weight'].to_numpy()
+
+    # 3) 2차원 행렬로 변환
+data2 = data.reshape(-1,1)  # 2차원 행렬로 변환 / 자동행
+
+    # 4) 문제집 / 정답지 나눠주는 라이브러리 가져오기
+from sklearn.model_selection import train_test_split
+
+    # 5) 모델에 적용할 비율 설정
+train_input, test_input, train_target, test_target = train_test_split(data2,target)
+
+    # 6) 라이브러리 가져오기
+from sklearn.neighbors import KNeighborsRegressor
+
+    # 7) 모델 생성
+knn = KNeighborsRegressor()
+knn.fit(train_input,train_target)
+knn.score(test_input,test_target)
+
+    # 8) 정밀도를 높이기 위한 이웃수 재설정
+len(train_input)
+for i in range(1,43):
+    knn = KNeighborsRegressor(n_neighbors=i)
+    knn.fit(train_input,train_target)
+    score = knn.score(test_input,test_target)
+    print("이웃수: {} // 정밀도: {}".format(i,score))
+
+    # 9) 이웃수 확인 후 모델 재생성
+knn = KNeighborsRegressor(n_neighbors=2)
+knn.fit(train_input,train_target)
+knn.score(test_input,test_target)
+
+    # 10) 실제값과 예측값의 차의 평균 확인
+import numpy as np
+np.mean(abs(test_target - knn.predict(test_input)))
+
+## 51차시 : 선형 회귀---------------------------------------------------------------------------------------------------------
+
+    # 종속변수 y와 한 개 이상의 독립 변수 x와의 선형 상관 관계를 모델링하는 회귀분석 기법
+
+    # 데이터를 놓고, 그것을 가장 잘 설명할 수 있는 선을 찾는 분석법
+
+    # 단순 선형 회귀
+    # 다중 선형 회귀
+
+    # Ir.fit(문제집,정답지)
+    # 기울기 : Ir.coef_
+    # 절편 : Ir.intercept_
+
+import pandas as pd
+perch = pd.read_csv("C:/Users/윤왕규/Desktop/python/알파코_온라인강의/실습 데이터_머신러닝 및 딥러닝 기초/perch.csv")
+
+data = perch['length'].to_numpy()
+target = perch['weight'].to_numpy()
+data2 = data.reshape(-1,1)
+
+from sklearn.model_selection import train_test_split
+train_input,test_input,train_target,test_target = train_test_split(data2,target)
+
+from sklearn.linear_model import LinearRegression
+import matplotlib.pyplot as plt
+plt.scatter(perch['length'],perch['weight'])
+
+    ## 선형회귀
+Ir = LinearRegression()
+Ir.fit(train_input,train_target)
+Ir.score(test_input,test_target)  # 특성이 하나이므로 정확도가 떨어짐
+Ir.coef_
+Ir.intercept_
+
+    # 회귀선 그림
+plt.scatter(perch['length'],perch['weight'])
+plt.plot(range(10,46),Ir.coef_*range(10,46)+Ir.intercept_,'red')
+
+
+    ## 특성 3개 데이터 => 데이터 분할 => 데이터 표준화 실시 => 선형 회귀 적용
+perch2 = pd.read_csv("C:/Users/윤왕규/Desktop/python/알파코_온라인강의/실습 데이터_머신러닝 및 딥러닝 기초/perch2.csv").to_numpy()
+
+train_input,test_input,train_target,test_target = train_test_split(perch2,target)
+
+import numpy as np
+mean = np.mean(train_input,axis=0)
+std = np.std(train_input,axis=0)
+
+train_scaled = (train_input-mean)/std
+test_scaled = (test_input-mean)/std
+
+Ir = LinearRegression()
+Ir.fit(train_scaled,train_target)
+Ir.score(test_scaled,test_target) 
+
+## 52차시 : 특성공학을 이용해서 특성 늘리기-------------------------------------------------------------------------------------------------------------------------------------
+
+    # 기존의 특성을 사용해 새로운 특성을 뽑아내는 작업
+    # 특성이 부족해서 모델이 학습이 잘 되지 않을 때 사용
+
+from sklearn.preprocessing import PolynomialFeatures
+import pandas as pd
+
+# 데이터 가져오기
+perch1 = pd.read_csv("C:/Users/윤왕규/Desktop/python/알파코_온라인강의/실습 데이터_머신러닝 및 딥러닝 기초/perch.csv")
+target = perch1['weight'].to_numpy()  # 정답지
+
+perch2 = pd.read_csv("C:/Users/윤왕규/Desktop/python/알파코_온라인강의/실습 데이터_머신러닝 및 딥러닝 기초/perch2.csv").to_numpy()
+perch2.shape          # 특성 3개
+
+# 특성공학 이용
+poly = PolynomialFeatures(include_bias=False)
+perch_poly = poly.fit_transform(perch2)
+perch_poly.shape      # 특성이 3개에서 9개로 바뀜
+
+# 데이터 나누기
+from sklearn.model_selection import train_test_split
+train_input,test_input,train_target,test_target = train_test_split(perch_poly,target)
+
+# 데이터 표준화(라이브러리 사용)
+from sklearn.preprocessing import StandardScaler
+ss = StandardScaler()
+train_scaled = ss.fit_transform(train_input) # 훈련데이터의 평균,표준편차를 학습해서 얻고, 변화해서 넣음
+test_scaled = ss.transform(test_input)       # 위에서 얻은 평균,표준편차를 변환해서 넣음
+
+# 선형 회귀 모델 가져오기 => 생성
+from sklearn.linear_model import LinearRegression
+Ir = LinearRegression()
+Ir.fit(train_scaled,train_target)
+Ir.score(test_scaled,test_target)
+
+    ## 주의! : 너무 과다한 특성을 학습하면 오히려 확률이 낮아짐
