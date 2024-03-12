@@ -1,0 +1,187 @@
+<03.12>
+
+## 53차시 : 로지스틱 회귀 모델 소개-------------------------------------------------------------------------------
+
+    # 선형 회귀에 시그모이드 함수를 적용하여 분류 모델에 적용
+    # 제대로된 확률 표현 가능
+
+from sklearn.datasets import load_iris  # 사이킷런 // 연습용데이터
+import pandas as pd
+
+iris = load_iris()
+df = pd.DataFrame(iris['data'],columns = iris['feature_names'])
+df['target'] = iris['target']          # 0 : setosa / 1 : versicolor / 2 : virginica
+df
+
+import seaborn as sns
+sns.pairplot(df,hue='target')
+
+    # 1) 문제집/정답지 만들기
+data = iris['data']
+target = iris['target']
+
+    # 2) 데이터 분할 / 표준화
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
+train_input,test_input,train_target,test_target = train_test_split(data,target)
+ss = StandardScaler()
+train_scaled = ss.fit_transform(train_input)
+test_scaled = ss.transform(test_input)
+
+    # 3) k최근접 분류모델 / 로지스틱 회귀모델 가져오기
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.linear_model import LogisticRegression
+
+    # 4) k최근접 분류모델
+len(train_input)
+for i in range(1,113):
+    knn = KNeighborsClassifier(n_neighbors=i)
+    knn.fit(train_input,train_target)
+    score = knn.score(test_input,test_target)
+    print("이웃수: {} // 정밀도: {}".format(i,score))
+
+knn = KNeighborsClassifier(n_neighbors=3)
+knn.fit(train_scaled,train_target)
+knn.score(test_scaled,test_target)
+test_target
+knn.predict(test_scaled)
+knn.predict_proba(test_scaled)
+
+    # 5) 로지스틱 회귀모델
+Ir = LogisticRegression()
+Ir.fit(train_scaled,train_target)
+Ir.score(test_scaled,test_target)
+test_target
+Ir.predict(test_scaled)
+Ir.predict_proba(test_scaled)
+
+import numpy as np
+np.round(Ir.predict_proba(test_scaled),3)
+
+## 54차시 : 트리 기반 모델 소개----------------------------------------------------------------------------------------------------
+
+    # 1) 결정트리 : 스무고개 하듯이 예/아니오 질문을 이어가며 학습하는 모델
+                    # 학습에서 과대적합되느 경향이 있음
+    
+    # 정형데이터는 트리기반을 이용해서 만들면 강력하다!!
+
+    # 2) 랜덤 포레스트: 다수의 결정트리로부터 분류 결과를 취합해서 결론을 얻는 방법
+
+from sklearn.datasets import load_iris  
+from sklearn.model_selection import train_test_split
+
+iris = load_iris()
+data = iris['data']
+target = iris['target']
+train_input,test_input,train_target,test_target = train_test_split(data,target)
+
+    # 1) 결정트리 모델 가져오기
+from sklearn.tree import DecisionTreeClassifier,plot_tree
+dt = DecisionTreeClassifier()     # max_depth = 를 통해 몇층에서 끝낼지 정할 수 있음 => 과대적합 막을 수 있음
+dt.fit(train_input,train_target)
+dt.score(test_input,test_target)
+
+    # 학습한 내용 그림 그리기
+import matplotlib.pyplot as plt
+plt.figure(figsize=(10,10))
+plot_tree(dt,feature_names=iris['feature_names'],filled=True)
+
+    # 2) 랜덤 포레스트 가져오기
+from sklearn.ensemble import RandomForestClassifier
+rf = RandomForestClassifier()
+rf.fit(train_input,train_target)
+rf.score(test_input,test_target)
+
+
+## 55차시 : 교차 검증----------------------------------------------------------------------------------------------------------------------
+
+    # 검증 데이터 없이 훈련 데이터와 시험 데이터로만 모델이 성능을 검증하고
+    # 수정하는 과정을 반복하면 그 모델은 시험 데이터에만 잘 맞는 모델이 되어버림.
+    # 따라서, 모델 성능을 검증하고 수정할 때는 검증 데이터를 따로 만들어서 조정하고
+    # 최종적으로 시험 데이터에서 최종 검증을 하는 것이 좋음
+
+    # 1) 데이터 가져오기
+from sklearn.datasets import load_iris  
+iris = load_iris()
+data = iris['data']
+target = iris['target']
+
+    # 2) 검증에 사용할 모델 가져오기
+from sklearn.ensemble import RandomForestClassifier
+rf = RandomForestClassifier()
+
+    # 3) 교차검증 라이브러리 가져오기
+from sklearn.model_selection import cross_val_score
+score = cross_val_score(rf,data,target,cv=5)         # 5등분으로 교차검증 하겠다
+
+    # 4) 모델 결과 평균 구하기
+import numpy as np
+np.mean(score)
+
+
+## 56차시 : 시뮬레이션을 통해 최적의 머신러닝 모델 만들기------------------------------------------------------------------------------------
+
+    # 시뮬레이션 함수를 사용해서 조정하면 최적의 옵션을 찾을 수 있음
+
+    # Grid Search
+    # 각자 탐색이라고 하며, 입력한 모든 값들을 순서대로 실행한 뒤에, 가장 높은 성능을 보이는 값을
+    # 찾는 탐색 방법, 단 시간이 아주 많이 걸린다는 단점이 있음
+
+
+    # 데이터 가져오기
+from sklearn.datasets import load_wine
+import pandas as pd
+
+wine = load_wine()
+df = pd.DataFrame(wine['data'], columns = wine['feature_names'])
+df['target'] = wine['target']
+
+    # 모델 가져오기
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+
+data, target = wine['data'], wine['target']
+rf = RandomForestClassifier()
+
+    # 100부터 200까지 시뮬레이션을 돌린다 -> 트리는 최대 10층까지만
+dic = {"n_estimators" : range(100,201,10), "max_depth" : range(1,11)}  # grid search에 넣을 딕셔너리 만들기 / 내가 원하는 옵션값들을 다 넣어서 딕셔너리로 만들기
+
+gs = GridSearchCV(estimator=rf,param_grid=dic,cv=3)
+gs.fit(data,target)
+gs.best_params_              # 최적의 값 찾아줌  ( 8층까지, 170개)
+
+result = gs.cv_results_      # 결과 확인
+df = pd.DataFrame(result)
+df.to_excel("result.xlsx")
+
+best = gs.best_estimator_    # 최적의 값 저장 => 이 옵션을 모델에 적용해서 사용하면 됨
+
+
+## 57차시 : 인공신경망 원리 알아보기----------------------------------------------------------------------------------------------------------------------------------------------
+
+    # 인공신경망에 핵심은 미분!!!
+
+    # 경사하강법
+import matplotlib.pyplot as plt
+import numpy as np
+
+x1 = np.array([2,4,6,8])
+y = np.array([30,75,55,90])
+a1 = 0
+b = 0
+Ir = 0.005
+
+for i in range(1,3001):
+    y_hat = a1 * x1 + b
+    error = y_hat - y
+
+    a1_diff = sum(2 * error * x1)   # 미분
+    b_diff = sum(2 * error * 1)
+
+    a1 = a1 - a1_diff * Ir          # 값들이 양수로 나오니 작은값 Ir을 곱해서 아래로 향하게 만듦
+    b = b = b_diff * Ir
+
+    print("{}회 학습 / 기울기 {} / 절편 {}".format(i,a1,b))
+
+plt.scatter(x1,y)
+plt.plot(x1,a1*x1 + b,'red')  # 기울기와 절편이 0인 직선 
