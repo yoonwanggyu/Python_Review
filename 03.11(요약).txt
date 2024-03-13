@@ -52,6 +52,7 @@
 
 import pandas as pd
 fish = pd.read_csv("C:/Users/윤왕규/Desktop/python/알파코_온라인강의/실습 데이터_머신러닝 및 딥러닝 기초/fish.csv")
+    
     # 1) 컴퓨터가 원하는 모양으로 바꾸기
 bream = fish[fish["class"]==1]
 smelt = fish[fish["class"]==0]
