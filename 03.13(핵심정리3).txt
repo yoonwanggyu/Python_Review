@@ -7,6 +7,21 @@
     # 특성공학 : 데이터 특성의 수를 늘릴 수 있음
     # 교차 검증 
 
+    # <머신러닝 모델>
+1) K 최근접 이웃 분류 모델
+-> from sklearn.neighbors import KNeightborsClassifier
+2) K 최근접 이웃 회귀 모델
+-> from sklearn.neighbors import KNeighborsRegressor 
+3) 선형 회귀
+-> from sklearn.linear_model import LinearRegression
+4) 로지스틱 회귀 모델
+-> from sklearn.linear_model import LogistcRegression
+5) 트리 기반 모델(결정 트리)
+-> from sklearn.tree import DecisionTreeClassifier
+6) 트리 기반 모델(랜덤 포레스트 : 결정트리가 여러개 모인 모델)
+-> from sklearn.ensemble import RandomForestClassifier
+
+
     # K 최근접 이웃 모델
     # 회귀분석 : 연속적인 값을 예측할 때 사용하는 모델
     # 로지스틱회귀 : 회귀분석 모형에 시그모이드 함수를 이용해 분류 모델로 사용
@@ -16,3 +31,11 @@
     # 최적의 딥러닝 모델 만들기
     # CNN : 컨볼류션 레이어를 사용
     # RNN , LSTM 
+
+    # <딥러닝 모델>
+1) CNN - 이미지 데이터
+2) RNN - 시계열 데이터
+3) LSTM 
+
+
+
