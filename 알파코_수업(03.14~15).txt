@@ -60,3 +60,66 @@ my_string = "zpiaz"
 index_list = [1,2,0,0,3]
 
 solution(my_string,index_list)
+
+
+<03.15>
+
+
+
+## 03.15 수업-----------------------------------------------------------------------------------------------------------------------
+
+    # url = request.get("")  주소 가져오기
+    # url.content / url.text   가져온 내용 확이하기(내용은 같으나 형식만 다르다 / html이라 알아볼 수 없음 / content로 확인하는 것이 컴퓨터 입장에서는 좋음)
+
+    # soup = BeautifulSoup(url.content, "lxml")   lxml 파싱 도구로 파싱한다 / soup 안에 웹페이지 정보(html)가 다 들어있음
+
+    # a_tags = soup.select("a.news_tit")   클래스가 news_tit인 a태그를 다 리스트로 가져옴
+    
+    # 반복문으로 여러개 가져오기
+    # a = []
+    # for i in a_tags:
+        # a.append(i['title'])
+
+    # 반복문으로 가져온 리스트를 딕셔너리로 패킹
+    # dict = {"제목": a}
+
+# 실습) 다음 '삼성전자' 연관검색어만 가져오기
+import requests
+from bs4 import BeautifulSoup
+
+#1) 주소 가져오기
+url = requests.get("https://search.daum.net/search?nil_suggest=btn&w=news&DA=SBC&cluster=y&q=%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90")
+#2) BS 형으로 변환
+search = BeautifulSoup(url.content,"lxml")
+#3) 상위 태그 아이디에서 하위 태그 가져오기
+span_tags = search.select("div#netizen_lists_top span")
+#4) 총 몇개인지
+len(span_tags)
+#4) 반복문으로 다 가져오기
+for span_tag in span_tags:
+    print(span_tag.text)
+
+    ## 접근 순서
+    # - 원하는 태그들 중 하나 선택 -> 태그 확인
+    # - 태그 속성 확인
+    # - 있다면 바로 select()
+    # - len() 확인
+
+
+# 실습) 뉴스 제목 가져오기
+url = requests.get("https://search.daum.net/search?nil_suggest=btn&w=news&DA=SBC&cluster=y&q=%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90")
+title = BeautifulSoup(url.content,"lxml")
+title_tags = title.select("strong.tit-g.clamp-g a")
+len(title_tags)
+titles = []
+for title_tag in title_tags:
+    titles.append(title_tag.text)
+
+titles
+
+    # 딕셔너리로 묶기
+dict = {"제목": titles}
+    # 데이터 프레임으로 변환
+import pandas as pd
+news_title = pd.DataFrame(dict)
+news_title
