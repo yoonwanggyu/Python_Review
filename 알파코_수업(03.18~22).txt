@@ -1,5 +1,5 @@
 ## 03.18 수업------------------------------------------------------------------------------------------------------------------------------------------
-    # 웹 크롤링 복습:
+    # 웹 크롤링 복습
     # 원하는 태그들만의 공통점 찾기 -> 속성 + 계층구조(상위태그 + 특성)
 
     # 크롤링시, 인덱싱, 슬라이싱을 select와 함께 적극적으로 활용
@@ -29,18 +29,20 @@ with open('불변의 법칙.jpg','wb') as f:
 
     ## iframe은 파싱이 안된다
     ## 해당 주소 들어가서 파싱해야 된다
+
+    # 1) 
 url = 'https://finance.naver.com/sise/sise_index_day.naver?code=KOSPI'
 resp = requests.get(url)
-
+    # 2)
 soup = BeautifulSoup(resp.content,'lxml')
-
+    # 3)
 date = [date.text for date in soup.select("td.date")]
 price = [price.text for price in soup.select("td.number_1")[::2]][::2]
 diff = [('-' + diff.text.strip() if 'red02' not in diff['class'] else diff.text.strip()) for diff in soup.select("td.rate_down span")]
 rate = [rate.text.strip() for rate in soup.select("td.number_1 span.tah")]
 volumn = [volumn.text.strip() for volumn in soup.select("td.number_1")[2::4]]
 amount = [amount.text.strip() for amount in soup.select("td.number_1")[3::4]]
-
+    #4)
 df_ksp200 = pd.DataFrame({"날짜":date,
                           "체결가" : price,
                           "전일비": diff,
