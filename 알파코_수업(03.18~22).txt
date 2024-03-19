@@ -48,3 +48,72 @@ df_ksp200 = pd.DataFrame({"날짜":date,
                           "거래량" : volumn,
                           "거래대금" : amount})
 df_ksp200
+
+
+## 03.19 수업------------------------------------------------------------------------------------------------------------------------------------------------
+
+    # 요청이 거절당했을 때 -> headers를 바꿔서 접근해라
+    # 언론사별로 형식이 다르므로 '네이버뉴스' 통합 페이지 href만 보아서 다시 접근
+
+    # javascript 1) disable js 하고 -> 강아지 사진 가져오기
+url = requests.get("https://www.google.com/search?q=%EA%B0%95%EC%95%84%EC%A7%80&sca_esv=074560fb4084e5a7&biw=1536&bih=826&gbv=1&tbm=isch&ei=xSz5ZaztCIyk2roPv_yU-Ak&start=0&sa=N")
+soup = BeautifulSoup(url.content,"lxml")
+
+img_tags = soup.select("img.DS1iW")
+len(img_tags)
+
+for idx,img_tag in enumerate(img_tags):
+    img = requests.get(img_tag['src'])
+
+    with open(f"img_{idx}.jpg",'wb') as f:
+        f.write(img.content)
+
+
+    # 크롤링 할 때의 루틴 !!
+        
+        # 1) 설정 들어가서 disable JS 하기
+            # 2) 자바로 바뀐 형태로 페이지가 뜨면 기본 루틴으로
+            # 3) 페이지가 뜨지 않는다 -> url 찾기 -> network -> fetch/js -> preview -> General request url 복사
+        # 2) iframe 확인
+            # 3) 맞다면 태그로 가서 src 에서 기본 루틴으로
+        # 3) 앞 상황이 아니라면 기본 루틴 -> 요청 거절이면 headers 바꾸기 
+
+
+    # javascript 2)
+        # 1. 자바 스크립트 페이지 url 찾아서 페이지 가져오기
+import requests
+import json
+from tqdm.notebook import tqdm
+
+url = "https://www.bluer.co.kr/api/v1/restaurants?page=0&size=30&query=&foodType=&foodTypeDetail=&feature=&location=&locationDetail=&area=&areaDetail=&priceRange=&ribbonType=&recommended=false&isSearchName=false&tabMode=single&searchMode=ribbonType&zone1=&zone2=&zone2Lat=&zone2Lng="
+resp = requests.get(url)
+resp.text
+        # 2. json을 딕셔너리로 형변환하기
+jsn = json.loads(resp.content)
+jsn["_embedded"]["restaurants"]
+
+        # 3. 필요한 정보 가져와서 데이터프레임으로 저장하기
+
+name, ribbon, year = [], [], []
+restaurants = jsn["_embedded"]["restaurants"]
+
+for restaurant in restaurants:
+    name.append(restaurant["headerInfo"]["nameKR"])
+    ribbon.append(restaurant["headerInfo"]["ribbonType"])
+    year.append(restaurant["headerInfo"]["year"])
+
+name,ribbon,year
+
+        # 4. 그럼 위의 코드를 바탕으로 모든 레스토랑의 아래 항목을 모두 파싱하여 csv로 저장해보세요.
+tels, dayoffs, parks, prices, menus, times = [], [], [], [], [], []
+restaurants = jsn["_embedded"]["restaurants"]
+
+for restaurant in restaurants:
+    menus.append(restaurant["statusInfo"]["menu"])
+    prices.append(restaurant["statusInfo"]["priceRange"])
+    parks.append(restaurant["statusInfo"]["parking"])
+    dayoffs.append(restaurant["defaultInfo"]["dayOff"])
+    tels.append(restaurant["defaultInfo"]["phone"])
+    times.append(restaurant["statusInfo"]["businessHours"])
+
+tels, dayoffs, parks, prices, menus, times
