@@ -120,6 +120,79 @@ for restaurant in restaurants:
 
 tels, dayoffs, parks, prices, menus, times
 
+## 03.20 수업-----------------------------------------------------------------------------------------------------------------------
+
+    # 데이터 분석
+
+    # 데이터를 보는 통찰력을 기르자!!
+    # 하나의 문제를 끝까지 생각할 수 있는 힘
+
+    # 머신러닝은 cost가 낮은 hypothesis를 찾는 것이다!!!    
+
+    # 머신런닝은?
+    #-> cost가 가장 낮을 때의 weight를 찾는 과정!!
+
+import requests
+import json
+from tqdm.notebook import tqdm
+from bs4 import BeautifulSoup
+
+    # 실습 : 한 웹툰 전체 화 전체 댓글 가져오기
+box = []
+for i in tqdm(range(1,51)):
+    url = 'https://apis.naver.com/commentBox/cbox/web_naver_list_jsonp.json?'
+
+
+    params = {'ticket': 'comic',
+              'templateId': 'webtoon',
+              'pool' : 'cbox3',
+              '_cv' : '20240319154009',
+              '_callback' : '',
+              'lang': 'ko',
+              'country' : 'KR',
+              'objectId' : f'808198_{i}',
+              'pageSize' : '15',
+              'indexSize' : '10',
+              'groupId' : '808198',
+              'listType' : 'OBJECT',
+              'pageType' : 'more',
+              'page' : '1',
+              'currentPage' : '1',
+              'refresh' : 'true',
+              'sort' : 'new',
+              '_': 1710914339145}
+
+    headers = {"referer" : f"https://comic.naver.com/webtoon/detail?titleId=808198&no=50&week=thu",
+           "user-agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"}
+    respond = requests.get(url,params=params, headers=headers)
+
+
+    # print(len('jQuery3630057019423799983926_1710895256081('))
+    # print(respond.text)
+
+    jsn2 = respond.text.replace("_callback(","")[:-2]
+
+
+    dic2 = json.loads(jsn2)
+
+    total_pages = dic2['result']['pageModel']['totalPages']
+
+    # print(total_pages)
+
+    for j in range(1,total_pages+1):
+        url = f'https://apis.naver.com/commentBox/cbox/web_naver_list_jsonp.json?ticket=comic&templateId=webtoon&pool=cbox3&_cv=20240319154009&_callback=jQuery3630057019423799983926_1710895256081&lang=ko&country=KR&objectId=808198_{i}&categoryId=&pageSize=15&indexSize=10&groupId=808198&listType=OBJECT&pageType=more&page={j}&currentPage={j}&refresh=true&sort=new&_=1710895256093'
+        headers = {"referer" : "https://comic.naver.com/webtoon/detail?titleId=808198&no=50&week=thu",
+            "user-agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"}
+        resp = requests.get(url, headers=headers)
+        jsn = resp.text.replace("jQuery3630057019423799983926_1710895256081(","").replace(");","")
+        dic = json.loads(jsn)
+
+        comments = dic['result']['commentList']
+
+        for comment in comments:
+            box.append(comment["contents"])
+
+
 
 
 
