@@ -274,5 +274,223 @@ words = TreebankWordTokenizer().tokenize(text)
 words
 
 
+## 03.22 수업-----------------------------------------------------------------------------------------------------------------------
+
+    # 1) TweetTokenizer.tokenize-------------##
+    # 이모티콘을 인식해주는 토큰화를 지원함
+from nltk.tokenize import TweetTokenizer
+tweet = "Snow White and the Seven Degrees #MakeAMovieCold@midnight:-)"
+tokenizer = TweetTokenizer()
+tokenizer.tokenize(tweet)
+
+import nltk
+nltk.download('punkt')
+from nltk.tokenize import word_tokenize
+print(word_tokenize("Snow White and the Seven Degrees #MakeAMovieCold@midnight:-)"))
+
+    # 2) kss.split_sentences-------------------##
+    # 한국어에 대한 문장 토큰화 도구 또한 존재
+
+import kss
+text = '딥러닝 자연어 처리가 재미있기는 합니다. 그런데 문제는 영어보다 한국어로 할 때 너무 어렵습니다. 이제 해보면 알걸요?'
+kss.split_sentences(text)
+
+    # 3) N-gram-----------------------------------##
+    # n-gram은 n개의 어절이나 음절을 연쇄적으로 분류해 그 빈도를 분석
+    # n=1일 때는 unigramm, 2일 대는 bigram, 3일때는 trigram
+
+from nltk import ngrams
+sentence = 'There is no royal road to learning'
+list(ngrams(sentence.split(),1))
+list(ngrams(sentence.split(),2))
+list(ngrams(sentence.split(),3))
+
+cleaned = " mary , n't slap green witch' , "
+list(ngrams(cleaned.split(),3))
+
+def n_grams(text,n):
+    return [text[i:i+n] for i in range(len(text)-n+1)]
+clean = ["mary",",","n't","slap","green",'witch',"."]
+n_grams(clean,3)
+
+
+    # 4) 불용어 제거----------------------------------##
+    # 불용어(Stop word)는 분석에 큰 의미가 없는 단어를 지칭
+
+import nltk
+from nltk.corpus import stopwords
+nltk.download('stopwords')
+
+print('영어 불용어 갯수:',len(nltk.corpus.stopwords.words('english')))
+print(nltk.corpus.stopwords.words('english')[:40])
+
+example = "Family is not an important thing. It's everything."
+stop_words = set(stopwords.words('english'))                    # set() 함수로 중복 제거
+word_tokens = word_tokenize(example)
+
+result = []
+for token in word_tokens:
+    if token not in stop_words:
+        result.append(token)
+
+print(word_tokens)   # 문장에서 전체 단어
+print(result)        # 문장에서 불용어 제외한 단어만
+
+
+
+stop_words = "is not an it's thing"                 # 직접 불용어 사전 만들기
+stop_words = text_to_word_sequence(stop_words)      # (')어퍼스트로피도 구분해주는 text_to_word_sequence 사용
+
+text = "Family is not an important thing. It's everything."
+text = text_to_word_sequence(text)
+
+nouns = []
+for noun in text:
+    if noun not in stop_words:
+        nouns.append(noun)
+
+nouns
+
+        # 텍스트 전처리의 목적은 말뭉치(Corpus)로부터 복잡성을 줄이는 것입니다
+
+    # 5) PorterStemmer-------------------------------------------##
+    # 어간 추출 : 단어의 의미를 담고 있는 단어의 핵심 부분
+
+from nltk.stem import PorterStemmer
+stemmer = PorterStemmer()
+
+print(stemmer.stem('working'),stemmer.stem('works'),stemmer.stem('worked'))
+print(stemmer.stem('amusing'),stemmer.stem('amuses'),stemmer.stem('amused'))
+print(stemmer.stem('happier'),stemmer.stem('happiest'))
+print(stemmer.stem('fancier'),stemmer.stem('fanciest'))
+print(stemmer.stem('was'), stemmer.stem('love'))
+
+    # 6) Lancaster Stemmer---------------------------------------------##
+from nltk.stem import LancasterStemmer
+stemmer = LancasterStemmer()
+
+print(stemmer.stem('working'),stemmer.stem('works'),stemmer.stem('worked'))
+print(stemmer.stem('amusing'),stemmer.stem('amuses'),stemmer.stem('amused'))
+print(stemmer.stem('happier'),stemmer.stem('happiest'))
+print(stemmer.stem('fancier'),stemmer.stem('fanciest'))
+print(stemmer.stem('was'), stemmer.stem('love'))
+
+    # 7) RegexpStemmer class-----------------------------------------------##
+    # 사용자가 지정한 정규표현을 기준으로 동작함
+from nltk.stem.regexp import RegexpStemmer
+stemmer = RegexpStemmer('ing')
+print(stemmer.stem('cooking'))
+print(stemmer.stem('cookery'))
+print(stemmer.stem('ingleside'))
+
+    # 8) SnowballStemmer class------------------------------------------------##
+from nltk.stem.snowball import SnowballStemmer
+spanish_stemmer = SnowballStemmer('english')
+print(spanish_stemmer.stem('cooking'))
+
+
+    # 9) 표제어 추출--------------------------------------------------------------##
+
+from nltk.stem import WordNetLemmatizer
+import nltk
+nltk.download('wordnet')
+nltk.download('omw-1.4')
+
+lemma = WordNetLemmatizer()
+print(lemma.lemmatize('amusing','v'),lemma.lemmatize('amuses','v'),lemma.lemmatize('amused','v'))
+print(lemma.lemmatize('happier','a'),lemma.lemmatize('happiest','a'))
+print(lemma.lemmatize('fancier','a'),lemma.lemmatize('fanciest','a'))
+print(lemma.lemmatize('was', 'v'), lemma.lemmatize('love', 'v'))
+print(lemma.lemmatize('dies','v'))
+print(lemma.lemmatize('watched', 'v'))
+print(lemma.lemmatize('has', 'v'))
+
+words = ['policy', 'doing', 'organization', 'have', 'going', 'love', 'lives', 'fly', 'dies', 'watched', 'has', 'starting']
+verbs = []
+for w in words:
+    lemma = WordNetLemmatizer().lemmatize(w,'v')
+    if lemma != w:
+        verbs.append(lemma)
+
+verbs
+
+
+    # 10) 정규표현식
+import re
+
+        # 1) .은 한 개의 임의의 문자를 나타낸다. 예를 들어 정규 표현식이 a.c라고 한다면, a와 c사이에 어떤 1개의 문자라도 올 수 있다는 뜻이다.
+r = re.compile("a.c")
+r.search("abc")
+r.search("ac")
+
+        # 2) ?는 ? 앞의 문자가 존재할 수도 있고, 존재하지 않을 수도 있는 경우를 나타낸다. 
+r = re.compile("ab?c")
+r.search("ac")
+r.search("abcd")
+
+        # 3) *은 바로 앞의 문자가 0개 이상일 경우를 나타낸다. 앞의 문자는 존재하지 않을 수도 있으며, 또는 여러 개일 수도 있다.
+r = re.compile("ab*c")
+r.search("abbc")
+r.search("ac")
+
+        # 4) +는 *와 유사하다. 하지만 다른 점은 앞의 문자가 최소 1개 이상이어야 한다.
+r = re.compile("ab+c")
+r.search("ac")
+r.search("abbc")
+
+        # 5) ^는 시작되는 글자를 지정한다. 가령 정규표현식이 ^a라면 a로 시작되는 문자열만을 찾아낸다.
+r = re.compile("^c")
+r.search("coomputer")
+r.search("apple")
+
+        # 6) {숫자}기호 문자에 해당 기호를 붙이면, 해당 문자를 숫자만큼 반복한 것을 나타낸다.
+r = re.compile("ab{2}c")  
+r.search("abbc")
+
+r = re.compile("ab{1,3}c")  # b가 1개~3개
+r.search("abc")
+r.search("abbbc")
+
+r = re.compile("ab{2,}c")   # b가 2개 이상
+r.search("abbc")
+r.search("abbbbbbc")
+
+        # 7) []안에 문자들을 넣으면 그 문자들 중 한 개의 문자와 매치라는 의미를 가진다
+r = re.compile("[abc]")
+r.search('acg')
+r.search('babo')
+r.search('cdef')
+
+        # 8) [^문자]는 5)에서 설명한 ^와는 완전히 다른 의미로 쓰인다. 여기서는 ^ 기호 뒤에 붙은 문자들을 제외한 모든 문자를 매치하는 역할을 한다.
+r = re.compile('[^abc]')
+r.search("1st")
+
+        # 9) (1) re.match()와 re.search()의 차이
+        #    search()가 정규 표현식 전체에 대해서 문자열이 매치하는지를 본다면, match()는 문자열의 첫 부분부터 정규표현식과 매치하는지를 확인한다.
+
+r = re.compile("ab.")
+r.search("abc")
+r.match("ffabc")
+
+        # 10) split() 함수는 입력된 정규 표현식을 기준으로 문자열들을 분리하여 리스트로 리턴한다.
+text = "사과+딸기+수박+멜론+바나나"
+print(re.split("\+",text))
+print(text.split("+"))
+
+        # 11) 3) re.findall() 함수는 정규 표현식과 매치되는 모든 문자열들을 리스트로 리턴한다.
+text = """이름 : 김철수
+전화번호 : 010 - 1234 - 1234
+나이 : 30
+성별 : 남"""
+pattern = "[0-9]+"
+a = re.findall(pattern,text)   # re.findall("\d+",text)
+print(a)
+
+        # 12) re.sub() 함수는 정규 표현식 패턴과 일치하는 문자열을 찾아 다른 문자열로 대체할 수 있다.
+text="Regular expression : regex or regexp[1] (sometimes called a rational expression)[2][3] is, a sequence of characters that define a search pattern."
+re.sub('[^a-zA-Z]',' ',text)    # 영어 제외한 나머지 모두 공백 처리
+text="Regular expression : regex or regexp[1]  안녕 (sometimes called a rational expression)[2][3] is, 하세요, a sequence of characters that define a search pattern."
+re.sub('[^가-힣]',' ', text)
+
 
 
