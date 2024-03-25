@@ -1,0 +1,155 @@
+# 03.25------------------------------------------------------------------------------------------------------------####
+
+    # 정수 인코딩-----------------------------------------------------------------------##
+    # 단어를 빈도수 순으로 정렬한 단어 집합(vocabulary)을 만들고 => 빈도수가 높은 순서대로 차례로 낮은 숫자부터 정수를 부여하는 방법이 있습니다.
+import nltk
+from nltk.tokenize import sent_tokenize
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
+
+        # 1) 문장 토큰화
+nltk.download('popular')
+text = "A barber is a person. a barber is good person. a barber is huge person. he Knew A Secret! The Secret He Kept is huge secret. Huge secret. His barber kept his word. a barber kept his word. His barber kept his secret. But keeping and keeping such a huge secret to himself was driving the barber crazy. the barber went up a huge mountain."
+text = sent_tokenize(text)
+text
+        # 2) 각 문장을 단어 토큰화 후 불용어 제외한 단어들만 추출
+vocab = {}
+sentences = []
+stopwords = set(stopwords.words('english'))
+
+for i in text:
+    sentence = word_tokenize(i)
+    result = []
+
+    for word in sentence:
+        word = word.lower()
+        if word not in stopwords:
+            if len(word) > 2:
+                result.append(word)
+                if word not in vocab:
+                    vocab[word] = 0
+                vocab[word] += 1
+    sentences.append(result)
+
+sentences
+vocab.items()
+
+        # 3) 빈도수에 따른 정렬
+vocab_sorted = sorted(vocab.items(), key = lambda x : x[1], reverse=True)
+vocab_sorted
+
+        # 4) 빈도가 1인 단어 제외 -> 다시 빈도수가 많을 수록 1 부여
+word_to_index = {}
+i = 0
+for (word,freq) in vocab_sorted:
+    if freq > 1:
+        i += 1
+        word_to_index[word] = i
+
+word_to_index
+
+        # 5) 상위 5개만 추출
+word_freq = [w for w,c in word_to_index.items() if c >= 6]
+for w in word_freq:
+    del word_to_index[w]
+word_to_index
+
+        # 6) 이제 word_to_index에는 빈도수가 높은 상위 5개의 단어만 저장되었습니다. 
+        #    이제 word_to_index를 사용하여 단어 토큰화가 된 상태로 저장된 sentences에 있는 각 단어를 정수로 바꾸는 작업을 하겠습니다.
+        #    Out-Of-Vocabulary(단어 집합에 없는 단어)의 약자로 'OOV'라고 합니다.
+word_to_index['OOV'] = len(word_to_index) + 1       # 단어 집합에 없는 단어는 6으로 정수 인코딩
+encoded = []
+for s in sentences:
+    temp = []
+    for w in s:
+        try:
+            temp.append(word_to_index[w])
+        except KeyError:
+            temp.append(word_to_index['OOV'])
+    encoded.append(temp)
+
+encoded
+
+
+    # counter()함수 사용---------------------------------##
+from collections import Counter
+sentences
+        # 1) 하나의 리스트에 단어들 나열
+words = sum(sentences,[])
+        # 2) 함수로 한번에 갯수 카운트 가능
+vocab = Counter(words)
+        # 3) 상위 5개만 출력
+vocab = vocab.most_common(5)
+        # 4) 정수 인코딩 / 빈도수가 높은 순서대로 1~
+vocab_to_index = {}
+i = 0
+for w,f in vocab:
+    i += 1
+    vocab_to_index[w] = i
+
+vocab_to_index
+
+
+    # (*args) / (*kwargs) 이용 => 여러개의 인자를 받기 위해--------------------------------------------------------------##
+        # 리스트는 계산이 안됨 => 각각 계산이 안되기 때문에 오류 => 적용 가능한 함수를 만들어 줘야 함!!
+
+def test(*args): #args : argument *(Asterisk) : 개수가 정해지지 않은 변수를 함수의 파라미터로 사용하는 것.
+    #args:tuple
+    print(args)
+test(1,2,3,4)
+
+def add_all(*inputs):
+    return sum(inputs)
+add_all(1,2,3,4,5,6,7,8,9,10)
+
+def add_all(*inputs):
+    add = 0
+    for i in inputs:    # 행에 접근
+        for j in i:     # 열에 접근
+            add += j
+    print(add)
+add_all([1,2,3,4,5,6,7,8,9,10])
+
+def add_all(*inputs):   #  list와 tuple을 동시에 받을 수 있는 코드
+    add = 0
+    for i in range(len(inputs)):
+        if type(inputs[i]) == list:
+            for j in inputs[i]:
+                add += j
+        else:
+            add += inputs[i]
+    return add
+print(add_all(1,2,3,4,5,6,7,8,9,10))
+print(add_all([1,2,3,4,5,6,7,8,9,10]))
+
+def dict_1(**kwargs):  # 매개변수가 몇개 입력으로 오는지 모를 때 -> 딕셔너리로 반환
+    print(kwargs)
+dict_1(a=1,b=2,c=3)
+
+
+    # NLTK의 FreqDist---------------------------------------------------------------------------------##
+    # FreqDist의 입력으로는 반드시 토큰화가 이루어진 상태여야 한다.
+
+from nltk import FreqDist
+import numpy as np
+sentences = ['barber', 'barber', 'person', 'barber', 'good', 'person']
+
+        # np.hstack으로 문장 구분을 제거하여 입력으로 사용 . ex) ['barber', 'person', 'barber', 'good' ... 중략 ...
+vocab = FreqDist(np.hstack(sentences))   # np.hstack() 함수는 주어진 배열들을 수평(가로)으로 합치는 기능을 해요! 이 함수는 1차원 배열을 수평(가로)으로 쌓을 때 많이 사용
+
+vocab = vocab.most_common(5)
+
+        # 정수 인코딩
+word_to_index = {word[0] : index + 1 for index,word in enumerate(vocab)}
+
+
+    # 품사 태깅-------------------------------------------------------------------------------------------------##
+    # 문장을 형태소 단위로 분리 한 후, 해당 형태소의 품사를 태깅하는 것을 의미
+
+from nltk.tag import pos_tag
+nltk.download('punkt')
+nltk.download('averaged_perceptron_tagger')
+
+text = "I am actively looking for Ph.D. students. and you are a Ph.D. student."
+word = word_tokenize(text)
+pos_tag(word)
