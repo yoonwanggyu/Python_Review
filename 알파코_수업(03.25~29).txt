@@ -538,3 +538,57 @@ corpus = [
 tfidfv = TfidfVectorizer().fit(corpus)
 print(tfidfv.transform(corpus).toarray())
 
+# 03.28------------------------------------------------------------------------------------------------##
+
+    # 머신러닝 - 지도학습 -> 회귀분석(연속형 변수) <-> 분류분석
+    # 독립변수들이 종속변수에 미치는 영향을 추정
+    # 변수들 사이의 인과관계를 밝힌다
+    
+    # 상관관계 : 두 변수 간 선형적 또는 비선형적 관계
+    # 인과관계 : 하나의 사건이 다른 사건을 일으킬 때 두 사건의 관계
+
+    # 등분산성 : 잔차(에러)들의 변동성(분산)이 일정한 형태
+
+    # 정규성 (Q-Q plot) : 잔차들이 정규분포를 따른다
+
+    # 가정 : 에러(잔차)들의 분포가 독립적이고 등분산성이어야 하며 정규분포를 따라야 한다
+
+    # 최적의 회귀 모델을 만드는 것은 바로 데이터의 잔차합이 최소가 되는 모델을 만든다
+    # 동시에 오류값 합이 최소가 될 수 있는 최적의 회귀계수를 찾는 것
+
+    # 경사 하강법 : 기울기가 0이 되는 지접을 찾는 방법
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+np.random.seed(0)
+# y = 4X + 6 식을 근사(w1=4, w0=6). random 값은 Noise를 위해 만듬
+# w1 = X의 가중치 , w0 = 절편
+X = 2 * np.random.rand(100,1)
+y = 6 + 4 * X + np.random.rand(100,1)  # y = 6+4X (2에다가 랜덤값을 곱하면 랜덤값)
+
+# X, y 데이터 셋 scatter plot으로 시각화
+plt.scatter(X,y)
+plt.show()
+
+    # 경사하강법 식을 파이썬으로 구현
+
+# w1 과 w0 를 업데이트 할 w1_update, w0_update를 반환.
+def get_weight_updates(w1,w0,X,y,learning_rate = 0.01):
+   N = len(y)  # y = w0 + w1 * X_1 ->  벡터의 길이
+    # 먼저 w1_update, w0_update를 각각 w1, w0의 shape와 동일한 크기를 가진 0 값으로 초기화
+   w1_update = np.zeros_like(w1) #벡터크기에 따라서 0 mapping시켜줘.
+   w0_update = np.zeros_like(w0)
+    # 예측 배열 계산하고 예측과 실제 값의 차이 계산
+   y_pred = np.dot(X,w1.T) + w0  #np.matmul써도 되지만, 어차피 벡터 계산이기 때문에 dot 을 썻음. y = ax+b에서 ax : np.dot(X,w1.T)
+   diff = y - y_pred  # error function  = (실제값 - 예측값)
+
+    # w0_update를 dot 행렬 연산으로 구하기 위해 모두 1값을 가진 행렬 생성
+   w0_factors = np.ones((N,1))  # 초기값 ones로 셋팅 N크기만큼 받아들이고,
+
+    # w1과 w0을 업데이트할 w1_update와 w0_update 계산
+   w1_update = -(2/N) * learning_rate * (np.dot(X.T,diff))  # error ftn : mse(mean square error)
+    #/summation_i^n (y-y_hat)(-x_i)
+   w0_update = -(2/N) * learning_rate * (np.dot(w0_factors.T,diff))  # summation_i^n (y-y_hat)(-x_1)
+
+   return w1_update,w0_update  #W_0,W_1 update
