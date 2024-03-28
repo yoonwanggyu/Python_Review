@@ -316,3 +316,225 @@ sw = stopwords.words("english")
 vect = CountVectorizer(stop_words=sw)
 print(vect.fit_transform(text).toarray())
 print(vect.vocabulary_)
+
+
+# 03.27----------------------------------------------------------------------------##
+
+    # 카운트 기반의 단어 표현
+    # 텍스트를 위와 같은 방식으로 수치화를 하고나면, 통계적인 접근 방법을 통해 여러 문서로 이루어진 텍스트 데이터가 있을 때 어떤 단어가 특정 문서 내에서 얼마나 중요한 것인지를 나타내거나, 
+    # 문서의 핵심어 추출, 검색 엔진에서 검색 결과의 순위 결정, 문서들 간의 유사도를 구하는 등의 용도로 사용할 수 있습니다.
+    
+    # 주어진 코퍼스를 정수 인코딩으로 숫자로 변환 후 코사인 유사도 구하기
+    # 유사도는 -1과1 사이(확률)
+    # 1에 가깝다고 인간이 생각하기에도 문장간의 유사도 명확한 것은 아님
+
+    # 1) BOW
+from konlpy.tag import Okt
+import konlpy
+okt = Okt()
+stopword_list = ['을', '은', '는', '이', '가', '를', '있', '하', '것', '들',' 그', '되', '수', '보', '않', '없', ',', '.', "게", '의', '내', '에서', '에']
+
+        # 형태소 단위로 분리 후 stopword 제거하는 함수
+def Tokenize(word: str) -> list:    # 새로운 문법 : word를 str로 지정하고 출력값을 list로 하겠다
+  temp = okt.morphs(word)
+  return [k for k in temp if k not in stopword_list]
+
+        # make Bag of Words
+def make_BOW(document: list) -> dict:
+
+  words = set(document)
+  BOW = dict()
+  for word in words:
+    if word not in BOW:
+      BOW[word] = len(BOW)
+  return BOW
+
+        # make count vector
+def make_cntvec(document: list, BOW: dict) -> list:
+
+  count_vector = [0] * len(BOW)
+
+  for idx, word in enumerate(BOW.keys()):
+    count_vector[idx] = document.count(word)
+  return count_vector
+
+sentence1 = Tokenize("나는 매일 아침 달리기를 한다")
+sentence2 = Tokenize("나는 매일 저녁 헬스장에 간다")
+sentence3 = Tokenize("날씨가 많이 추워졌다")
+BoW_sentence = sentence1 + sentence2 + sentence3
+
+bows = make_BOW(BoW_sentence)
+
+sent1_cntvec = make_cntvec(sentence1, bows)
+sent2_cntvec = make_cntvec(sentence2, bows)
+sent3_cntvec = make_cntvec(sentence3, bows)
+print(list(bows.keys()))
+print(sent1_cntvec)
+print(sent2_cntvec)
+print(sent3_cntvec)
+
+    # 2) 코사인 유사도
+        # count vector 유사도 분석에는 cosine similarity 사용
+import numpy as np
+from numpy import dot
+from numpy.linalg import norm
+
+def cos_sim(A,B):
+   return dot(A,B) / (norm(A)*norm(B))
+
+print("문장 1과 2의 코사인 유사도")
+cos_sim(sent1_cntvec, sent2_cntvec)
+
+print("문장 1과 3의 코사인 유사도")
+cos_sim(sent1_cntvec, sent3_cntvec)
+
+
+        # BoW에 기반한 단어 표현 방법인 DTM, TF-IDF
+
+    # 3) DTM
+    # 다수의 문서에서 등장하는 각 단어들의 빈도를 행렬로 표현한 것을 말함.
+    # 쉽게 생각하면 각 문서에 대한 BoW를 하나의 행렬로 만든 것으로 생각할 수 있으며, 
+    # BoW와 다른 표현 방법이 아니라 BoW 표현을 다수의 문서에 대해서 행렬로 표현하고 부르는 용어입니다.
+
+from sklearn.feature_extraction.text import CountVectorizer
+corpus = [
+    'This is the first document.',
+    'This is the second second document.',
+    'And the third one.',
+    'Is this the first document?',
+    'The last document?',
+]
+vect = CountVectorizer()
+vect.fit(corpus)
+vect.vocabulary_
+vect.transform(corpus).toarray()
+
+        # ngram
+vect = CountVectorizer(ngram_range=(2,2)).fit(corpus)
+vect.vocabulary_
+
+        # dictvectorizer
+from sklearn.feature_extraction import DictVectorizer
+v = DictVectorizer(sparse=False)
+D = [{'A': 1, 'B': 2}, {'B': 3, 'C': 1}]
+X = v.fit_transform(D)
+print(v.fit_transform(D))
+v.feature_names_
+v.feature_names_
+
+
+    # 희소행렬
+    # 대부분 값이 0으로 채워진 행렬을 희소 행렬(Sparse Matrix)이라고 합니다.
+
+    # 1) COO 방식
+    # 0이 아닌 데이터만 별도의 배열에 저장하고, 그 데이터가 가리키는 행과 열의 위치를 별도의 배열에 저장하는 방식
+from scipy import sparse
+import numpy as np
+
+# 0 이 아닌 데이터 추출
+data = np.array([3,1,2])
+
+# 행 위치와 열 위치를 각각 array로 생성
+row_pos = np.array([0,0,1])  # 행
+col_pos = np.array([0,2,1])  # 열
+
+# sparse 패키지의 coo_matrix를 이용하여 COO 형식으로 희소 행렬 생성
+sparse_coo = sparse.coo_matrix((data, (row_pos,col_pos))).toarray()
+
+    # 2) CSR 방식
+    # coo 방식에서 행 인덱스를 나타내는 리스트는 [0, 0, 1]이었습니다. 이는 행렬의 첫 번째 행에 0이 아닌 원소가 2개 있다는 의미입니다. 
+    # 첫 번째 행에 원소가 2개 있다는 것을 알기 위해 굳이 0을 두번 반복할 필요는 없습니다.
+
+from scipy.sparse import csr_matrix
+
+data = [2, 4, 2, 1, 5]
+
+indptr = [0, 3, 4, 5]     # 0:3 / 3:4 / 4:5 행
+indices = [0, 1, 2, 2, 3] # 열(coo방식과 같음)
+
+
+sparse_csr = csr_matrix((data, indices, indptr)).toarray()
+
+
+    # TF-IDF
+    # 개별 문서에서 자주 나타나는 단어에 높은 가중치를 주되, 
+    # 모든 문서에서 전반적으로 자주 나타나는 단어에 대해서는 패널티를 주는 방식으로 값을 부여
+    # DTM 내의각 단어들마다 중요한 정도를 가중치로 주는 방법
+    # TF와 IDF를 곱한 값을 의미
+    
+    # tf(t,d) : 특정 문서 d에서의 특징 단어 t의 등장 횟수
+    # df(t) : 특정 단어 t가 등장한 문서의 수
+    # idf(t,d) : df(t)에 반비례하는 수
+
+import pandas as pd # 데이터프레임 사용을 위해
+from math import log # IDF 계산을 위해
+
+docs = [
+  '먹고 싶은 사과',
+  '먹고 싶은 바나나',
+  '길고 노란 바나나 바나나',
+  '저는 과일이 좋아요'
+]
+
+N = len(docs)
+
+vocab = list(set(w for doc in docs for w in doc.split()))
+vocab.sort()
+vocab
+
+def tf(t,d):
+   return d.count(t)
+
+def idf(t):
+    df = 0
+    for doc in docs:
+      df += t in doc
+    return log(N/(df+1))
+
+def tfidf(t,d):
+   return tf(t,d) * idf(t)
+
+        # DTM 먼저 구하기
+        # 1) countvectorizer 함수 이용 방법
+vect = CountVectorizer()
+vect.fit(docs)
+vect.transform(docs).toarray()
+
+        # 2) 직접 for문으로 구현
+result = []
+for i in range(N):
+   result.append([])
+   d = docs[i]
+   for j in range(len(vocab)):
+      t = vocab[j]
+      result[-1].append(tf(t,d))
+tf_ = pd.DataFrame(result,columns = vocab)
+    
+        # 각 단어의 IDF값 구하기
+result = []
+for j in range(len(vocab)):
+   t = vocab[j]
+   result.append(idf(t))
+idf_ = pd.DataFrame(result,index = vocab,columns=["IDF"])
+
+        # TF - IDF 행렬 구하기
+result = []
+for i in range(N):
+   result.append([])
+   d = docs[i]
+   for j in range(len(vocab)):
+      t = vocab[j]
+      result[-1].append(tfidf(t,d))
+tfidf_ = pd.DataFrame(result,columns = vocab)
+
+
+    # TF - IDF 함수
+from sklearn.feature_extraction.text import TfidfVectorizer
+corpus = [
+    'you know I want your love',
+    'I like you',
+    'what should I do ',
+]
+tfidfv = TfidfVectorizer().fit(corpus)
+print(tfidfv.transform(corpus).toarray())
+
