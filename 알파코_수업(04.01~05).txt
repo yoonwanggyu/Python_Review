@@ -1,0 +1,84 @@
+## 04.01---------------------------------------------------------------------------------------------------------------------------##
+
+## 04.12---------------------------------------------------------------------------------------------------------------------------##
+from sklearn.linear_model import LogisticRegression
+from sklearn.datasets import load_iris
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
+import numpy as np
+
+
+    # <로지스틱 회귀 모델> / <의사결정 나무 모델>
+
+    # iris 데이터
+iris = load_iris()
+X = iris.data
+y = iris.target
+df_X = pd.DataFrame(X,columns=iris.feature_names)
+df_y = pd.DataFrame(y,columns=['Species'])
+
+df = pd.DataFrame(X,columns = iris.feature_names)
+df['target'] = y
+df
+
+sns.pairplot(df,hue='target')
+plt.show()
+
+sns.histplot(df[df.target != "0"]["petal length (cm)"], hist=True, rug=True, label="setosa")
+sns.histplot(df[df.target == "0"]["petal length (cm)"], hist=True, rug=True, label="others")
+plt.legend()
+plt.show()
+
+train_input,test_input,train_target,test_target = train_test_split(X,y,test_size=0.2)
+lr = LogisticRegression()
+lr.fit(train_input,train_target)
+lr.score(test_input,test_target)
+test_target
+lr.predict(test_input)
+lr.predict_proba(test_input)
+
+
+    # 유방암 데이터
+from sklearn.datasets import load_breast_cancer
+cancer = load_breast_cancer()
+
+
+        # 하나의 데이터프레임으로 생성
+cancer_df = pd.DataFrame(cancer.data,columns = cancer.feature_names)
+cancer_df['target'] = cancer.target
+cancer_df
+
+np.bincount(cancer.target)
+
+        # 특성 이름 확인
+for i,name in enumerate(cancer.feature_names):
+    print('%02d : %s' %(i,name))
+
+
+np.histogram(cancer.data[:,0], bins=20)
+_, bins=np.histogram(cancer.data[:,0], bins=20)
+print(_)
+print(bins)
+
+        # 특성에 따른 타켓들의 그래프
+melignant = cancer.data[cancer.target == 0]
+benign = cancer.data[cancer.target == 1]
+
+plt.figure(figsize=(20,15))
+
+for feature in range(cancer.feature_names.shape[0]):
+    plt.subplot(8,4,feature+1)
+    _, bins=np.histogram(cancer.data[:,0], bins=20)
+
+    plt.hist(melignant[:,feature],bins=bins,alpha=0.3)
+    plt.hist(benign[:,feature],bins=bins,alpha=0.3)
+    plt.title(cancer.feature_names[feature])
+    if feature == 0: plt.legend(cancer.target_names)
+    plt.xticks([])
+
+plt.show()
+
+
