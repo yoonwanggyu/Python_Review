@@ -1,6 +1,6 @@
 ## 04.01---------------------------------------------------------------------------------------------------------------------------##
 
-## 04.12---------------------------------------------------------------------------------------------------------------------------##
+## 04.02---------------------------------------------------------------------------------------------------------------------------##
 from sklearn.linear_model import LogisticRegression
 from sklearn.datasets import load_iris
 import pandas as pd
@@ -81,4 +81,156 @@ for feature in range(cancer.feature_names.shape[0]):
 
 plt.show()
 
+## 04.03---------------------------------------------------------------------------------------------------------------------------##
 
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, precision_score,recall_score,roc_auc_score
+from sklearn.metrics import f1_score, confusion_matrix,precision_recall_curve, roc_curve
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+
+    # 데이터 불러오기
+diabetes = pd.read_csv("/content/diabetes.csv")
+    # 데이터 확인
+diabetes['Outcome'].value_counts()   # 0과 1에 갯수가 다르다!! 0:Negative / 1:Positive
+diabetes.info()
+diabetes.describe()
+    # 상관관계 그래프
+corr = diabetes.corr()
+sns.heatmap(corr,annot=True)
+    # 결측치 확인
+diabetes.isnull().sum() 
+    # 박스 그래프 그리기
+ column = diabetes.columns
+ plt.figure(figsize = (16,8))
+ for i in range(len(diabetes.columns)):
+    plt.subplot(3,3,i+1)
+    sns.boxplot(x="Outcome",y=column[i],data=diabetes)
+    plt.tight_layout()
+    
+    # 막대 그래프 그리기
+ column = diabetes.columns
+ plt.figure(figsize = (16,8))
+ for i in range(len(diabetes.columns)):
+    plt.subplot(3,3,i+1)
+    diabetes[column[i]].hist()
+    plt.xlabel(column[i])
+    plt.tight_layout()
+
+    # 벗어나는 이상치 제거 : 3시그마 방법
+column = diabetes.columns
+for col in column:
+    mean = diabetes[col].mean()
+    std = diabetes[col].std()
+    threshold = mean + 3*std
+    count_outlier = np.sum(diabetes[col] > threshold)
+    print(col , "열의 이상치 갯수 : " , str(count_outlier))
+
+    # 이상치 제거
+    # 각 열에 모든 행에
+column = diabetes.columns
+for col in column:
+    mean = diabetes[col].mean()
+    std = diabetes[col].std()
+    threshold = mean + 3*std
+    diabetes.drop(diabetes[diabetes[col]>threshold].index[:],inplace=True)  
+new_diabetes = diabetes.dropna()
+
+    # 로지스틱 회귀모델 적용
+X = new_diabetes.iloc[:,:-1]
+y = new_diabetes.iloc[:,-1]
+print(X.shape,y.shape)
+X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=0.2,random_state=42,stratify=y)     
+lr = LogisticRegression(solver = 'liblinear')
+lr.fit(X_train,y_train)
+lr.score(X_test,y_test)
+# 두 개의 클래스(양성과 음성)가 있는 이진 분류 문제에서 데이터를 나눌 때, stratify=y를 설정하면 훈련 세트와 테스트 세트 모두에서 클래스 비율이 원본 데이터와 동일하게 유지
+
+    # 모델 성능 평
+def get_clf_eval(y_test=None, pred=None):
+    confusion = confusion_matrix(y_test, pred)    # 오차행렬
+    accuracy = accuracy_score(y_test , pred)      # 정확도
+    precision = precision_score(y_test , pred)    # 정밀도
+    recall = recall_score(y_test , pred)          # 재현율
+    f1 = f1_score(y_test,pred)                    # F1
+    # ROC-AUC 추가
+    roc_auc = roc_auc_score(y_test, pred)
+    print('오차 행렬')
+    print(confusion)
+    # ROC-AUC print 추가
+    print('정확도: {0:.4f}, 정밀도: {1:.4f}, 재현율: {2:.4f},\
+    F1: {3:.4f}, AUC:{4:.4f}'.format(accuracy, precision, recall, f1, roc_auc))
+pred = lr.predict(X_test)
+get_clf_eval(y_test,pred)
+
+    # 0값이 있는 열을 확인하고 평균값으로 대체
+zero_features = ['Glucose', 'BloodPressure','SkinThickness','Insulin','BMI']
+for feature in zero_features:
+    count = new_diabetes[new_diabetes[feature] == 0][feature].count()
+    print(f"{feature}의 0 건수는 {count} 입니다.")
+new_diabetes[zero_features] = new_diabetes[zero_features].replace(0,new_diabetes[zero_features].mean())
+new_diabetes.describe()
+
+    # 이번엔 0값을 평균으로 대체했고 standsclar써서 다시 모델 평가를 해보겠다 -> 떨어짐
+X = new_diabetes.iloc[:,:-1]
+y = new_diabetes.iloc[:,-1]
+
+# StandardScaler 클래스를 이용해 피처 데이터 세트에 일괄적으로 스케일링 적용
+scaler = StandardScaler( )
+
+X_scaled = scaler.fit_transform(X)
+
+X_train,X_test,y_train,y_test = train_test_split(X_scaled,y,test_size=0.2,random_state=156,stratify=y)    
+lr = LogisticRegression(solver = 'liblinear')
+lr.fit(X_train,y_train)
+lr.score(X_test,y_test)
+
+    # 의사결정 나무 모델 적용
+from sklearn import tree
+from sklearn.tree import DecisionTreeClassifier
+Decision_tree_clf = DecisionTreeClassifier()
+
+X = new_diabetes.iloc[:,:-1]
+y = new_diabetes.iloc[:,-1]
+
+X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=0.2,random_state=42,stratify=y)
+
+Decision_tree_clf.fit(X_train,y_train)
+Decision_predict = Decision_tree_clf.predict(X_test)
+get_clf_eval(y_test,Decision_predict)
+
+    # 랜덤포레스트 모델 적용
+# 배깅 방식 : 앙상블 학습의 기법 중 하나로 여러개의 기계 학습 모델을 독립적으로 학습시킨 후, 그 결과를 투표 또는 평균을 통해 종합하는 방법
+# 부스팅 방식 : 훈련 데이터세트에 대해 오차가 더 적은 모델들에 더 많은 가중치를 부여
+
+# 랜덤 포레스트는 배깅방식을 사용하는 앙상블 학습 모델입니다.
+# 배깅은 여러 개의 결정 트리를 독립적으로 학습하여 각자의 예측을 평균화하여 최종 예측을 만드는 방식입니다.
+from sklearn.ensemble import RandomForestClassifier
+Decision_tree_random = RandomForestClassifier()
+
+X = new_diabetes.iloc[:,:-1]
+y = new_diabetes.iloc[:,-1]
+
+X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=0.2,random_state=42,stratify=y)
+
+Decision_tree_random.fit(X_train,y_train)
+predict = Decision_tree_random.predict(X_test)
+get_clf_eval(y_test,predict)
+
+    # 그래디언 부스트 모델 적용
+from sklearn.ensemble import GradientBoostingClassifier
+gradientboost = GradientBoostingClassifier()
+
+X = new_diabetes.iloc[:,:-1]
+y = new_diabetes.iloc[:,-1]
+
+X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=0.2,random_state=42,stratify=y)
+
+gradientboost.fit(X_train,y_train)
+p = gradientboost.predict(X_test)
+get_clf_eval(y_test,p)
