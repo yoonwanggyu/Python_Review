@@ -234,3 +234,108 @@ X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=0.2,random_state=
 gradientboost.fit(X_train,y_train)
 p = gradientboost.predict(X_test)
 get_clf_eval(y_test,p)
+
+
+
+## 04.04---------------------------------------------------------------------------------------------------------------------------##
+
+    # 변수의 중요도
+    # Sharp Value
+!pip install shap
+import shap
+import xgboost as xgb  # or any other tree-based model library
+
+# Assuming you have your model and data ready
+tree_model = xgb.XGBClassifier()  # Example XGBoost classifier
+tree_model.fit(X_train, y_train)  # Train your model
+
+# Create object that can calculate SHAP values
+explainer = shap.TreeExplainer(tree_model)
+
+# Calculate SHAP values
+shap_values = explainer.shap_values(X_test)  # Assuming X_test is your test data
+
+# Initialize JavaScript visualizations in Jupyter Notebook
+shap.initjs()
+
+# X_test에 있는 첫번째 값에 대한 각 특성들의 기여도
+shap.force_plot(explainer.expected_value, shap_values[0], X_test.iloc[0, :])
+
+
+    # Ada Boosting
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn import datasets
+from sklearn import metrics
+
+iris = datasets.load_iris()
+X = iris.data
+y= iris.target
+
+X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=0.3)
+
+abc = AdaBoostClassifier(n_estimators = 50,
+                         learning_rate = 1,
+                         random_state = 7777)
+model = abc.fit(X_train,y_train)
+
+y_pred = model.predict(X_test)
+
+print("Accuracy : ", metrics.accuracy_score(y_test,y_pred))
+
+
+    # Gradient Boosting : 트리모형에서 틀린 것에 가중치를 보여함(가중치를 Gradient Descent방식으로)
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.datasets import load_breast_cancer
+
+cancer = load_breast_cancer()
+
+X = cancer.data
+y = cancer.target
+
+X_train,X_test,y_train,y_test = train_test_split(X,y,stratify=y,random_state=0)
+
+gbc = GradientBoostingClassifier(random_state=0,max_depth = 1,learning_rate=0.01)
+gbc.fit(X_train,y_train)
+
+score_train = gbc.score(X_train, y_train) # train set 정확도
+
+print('{:.3f}'.format(score_train))
+
+score_test = gbc.score(X_test, y_test) # 일반화 정확도
+
+print('{:.3f}'.format(score_test))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
