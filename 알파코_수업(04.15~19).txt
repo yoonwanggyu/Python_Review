@@ -1,0 +1,228 @@
+# 04.15-----------------------------------------------------------------------------------------------------------------------------------------------
+
+    # 1) AND 연산 퍼셉트론 구현
+        # 둘다 1 일땐 -> 1
+        # 나머지는 다 -> 0
+import numpy as np
+
+def AND(x1,x2):
+    x = np.array([x1,x2])
+    w = np.array([0.5,0.5]) # 초기값
+    b = -0.7                # 절편
+    tmp = np.sum(w*x) + b   # y값 = sum((w^T * X) + b)
+
+    if tmp <= 0:
+        return 0
+    else:
+        return 1
+    
+data = []
+for xs in [(0,0),(1,0),(0,1),(1,1)]:
+    data.append(xs)
+    print(data[0])
+    y = AND(xs[0],xs[1])
+    print(str(xs) + "->" + str(y))
+
+
+    # 2) NAND 연산 퍼셉트론 구현
+        # AND연산자 반대 
+def NAND(x1, x2):
+    x = np.array([x1, x2])
+    w = np.array([-0.5, -0.5])
+    b = 0.7
+    tmp =  np.sum(w * x) + b
+    if tmp <= 0:
+        return 0
+    else:
+        return 1
+
+for xs in [(0, 0), (1, 0), (0, 1), (1, 1)]:
+    y = NAND(xs[0], xs[1])
+    print(str(xs) + " -> " + str(y))
+
+
+    # 3) OR 연산자 퍼셉트론 구현
+        # 둘중에 하나라도 1이면 -> 1
+        # (0,0) -> 0
+def OR(x1,x2):
+    x = np.array([x1,x2])
+    w = np.array([2,2])
+    b = -1
+    tmp = np.sum(w*x) + b
+    if tmp <= 0:
+        return 0
+    else:
+        return 1
+    
+for xs in [(0, 0), (1, 0), (0, 1), (1, 1)]:
+    y = OR(xs[0],xs[1])
+    print(str(xs) + "->" + str(y))
+
+
+    # 4) XOR 연산 다층 퍼셉트론 구현
+        # (0,0) -> 0
+        # (0,1) -> 1
+        # (1,0) -> 1
+        # (1,1) -> 0
+def XOR(x1, x2):
+    s1 = NAND(x1, x2)
+    s2 = OR(x1, x2)
+    y = AND(s1, s2)
+    return y
+
+print("NAND, OR, AND")
+for xs in [(0, 0), (1, 0), (0, 1), (1, 1)]:
+    y = XOR(xs[0], xs[1])
+    print(str(xs) + " -> " + str(y))
+
+
+    # 5) 텐서플로우 익히기
+        # 자동 미분
+import tensorflow as tf
+x = tf.Variable(0.)  # 변수 x에 초기값으로 0.0을 할당하는 것
+    # TensorFlow에서 변수를 사용할 때는 그 변수를 사용하기 전에 초기화해야 합니다. 이는 TensorFlow가 변수에 대한 메모리를 할당하고 해당 변수를 사용할 준비를 하기 위함입니다. 
+    # TensorFlow의 tf.Variable() 함수를 사용하여 변수를 선언하고 초기화할 수 있습니다. 그렇기 때문에 코드에서 x를 초기화하는 것은 그저 TensorFlow에게 이 변수를 사용할 것이라고 알려주는 것과 같습니다.
+
+with tf.GradientTape() as tape: 
+    y = 2 * x +3
+grad_of_y_wrt_x = tape.gradient(y,x)  # y를 x에 대해서 미분
+print(grad_of_y_wrt_x)
+
+
+    # 6) Sequential API : 순차적 모델
+tf.random.set_seed(777)
+import numpy as np
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.optimizers import SGD
+from tensorflow.keras.losses import mse
+
+    # 데이터 준비하기
+        # 1-1) XOR -> 활성화 함수 : linear -> 직선 하나로는 XOR를 맞출 수 없음
+x = np.array([[0,0],[1,0],[0,1],[1,1]])
+y = np.array([[0],[1],[1],[0]])
+
+model = Sequential()
+model.add(Dense(1,input_shape = (2,),activation = 'linear'))    # layers.Dense랑 같은 의미(명시적으로 layers를 쓸 수도 있음 : 가독성)
+model.compile(optimizer = 'SGD',    # 확률적 경사하강법 : 손실 함수를 최소화하기 위해 모델의 가중치를 업데이트
+              loss = mse,           # mse 손실함수 사용 : 평균 제곱 오차 -> 회귀 문제에서 주로 사용 -> 차이가 작을수록 좋음
+              metrics = ['acc'])    # 모델 성능 지표 : 정확도 -> 분류 문제에서 주로 사용
+model.fit(x,y,epochs=500)
+model.summary()
+model.get_weights()
+
+    # 1-2) XOR -> 층 2개 -> 활성화 함수 : sigmoid 
+tf.random.set_seed(777) # 시드를 설정 함.
+
+# 데이터 준비하기
+x = np.array([[0,0],[1,0],[0,1],[1,1]])
+y = np.array([[0],[1],[1],[0]])
+
+# XOR gate이기 때문에 y값은 0,1,1,0임
+
+#모델 구성하기
+model = Sequential()
+model.add(Dense(32, input_shape = (2, ), activation = 'relu')) # 32개로 여러개로 쌓음.
+model.add(Dense(1, activation='sigmoid')) # 이진분류 모델 = sigmoid -> 3개부터는 softmax 사용
+                                          # 출력층에 존재하는 뉴런의 수
+
+#모델 준비하기
+model.compile(optimizer = 'adam',   # Adam : 각 가중치마다 개별적인 학습률 유지 / 각 가중치의 경사를 추적 / 지역 최솟값이 아닌 전역 최솟값을 탐색 / 각 반복 단계에서 편향을 보정하여 초기 반복에서 학습률을 너무 높게 설정하는 것을 막아줌
+              loss = mse,
+              metrics = ['acc'])    # list형태로 평가지표를 전달
+
+#학습시키기
+model.fit(x,y,epochs = 100)
+# 시각화
+from tensorflow.keras.utils import plot_model
+plot_model(model, show_shapes=True)
+plt.show()
+
+
+    # 7) Activation Functions
+def sigmoid(z):
+    return 1 / (1 + np.exp(-z))
+
+def relu(z):
+    return np.maximum(0, z)
+
+def derivative(f, z, eps=0.000001):
+    return (f(z + eps) - f(z - eps))/(2 * eps)
+import matplotlib.pyplot as plt
+
+z = np.linspace(-5, 5, 200)
+
+plt.figure(figsize=(11,4))
+
+plt.subplot(121)
+plt.plot(z, np.sign(z), "r-", linewidth=1, label="Step")
+plt.plot(z, sigmoid(z), "g--", linewidth=2, label="Sigmoid")
+plt.plot(z, np.tanh(z), "b-", linewidth=2, label="Tanh")
+plt.plot(z, relu(z), "m-.", linewidth=2, label="ReLU")
+plt.grid(True)
+plt.legend(loc="center right", fontsize=14)
+plt.title("Activation functions", fontsize=14)
+plt.axis([-5, 5, -1.2, 1.2])
+
+#plt.legend(loc="center right", fontsize=14)
+plt.title("Derivatives", fontsize=14)
+plt.axis([-5, 5, -0.2, 1.2])
+
+plt.show()
+
+
+    # 8) Functional API -> sequential 모델에 비해 복잡하고 다양한 유형의 연결을 다룰 때 사용 / 다중 입력(출력) 모델 
+## data 선언
+x_data = np.array([[0.0,0.0], [0.0,1.0], [1.0,0.0],[1.0,1.0]])
+y_data = np.array([[0], [1], [1], [0]])
+
+    # 입력층
+input_layer = tf.keras.layers.Input(shape=(2,))
+    # 은닉층
+x = tf.keras.layers.Dense(2,activation='sigmoid')(input_layer)
+    # 출력층
+Out_layer = tf.keras.layers.Dense(1,activation='sigmoid')(x)
+    # 모델 정의
+model = tf.keras.Model(inputs=[input_layer],outputs=[Out_layer])
+    # 모델 확인
+model.summary()
+
+optimizer = tf.keras.optimizers.SGD(learning_rate=0.7)
+loss = tf.keras.losses.binary_crossentropy              # 이진분류 문제에 사용 : 실제값과 예측값 사이의 교차 엔트로피 계산
+metrics = tf.keras.metrics.binary_accuracy              # 예측한 이진 레이블이 실제 레이블과 일치하는 비율 계산
+
+model.compile(loss = loss, optimizer = optimizer, metrics = [metrics])
+
+model.fit(x_data,y_data,epochs=100, batch_size=4)
+
+    # custom model
+input_A = tf.keras.layers.Input(shape=[5],name='wide_input')
+input_B = tf.keras.layers.Input(shape=[6],name='deep_input')
+hidden1 = tf.keras.layers.Dense(30,activation='relu')(input_B)
+hidden2 = tf.keras.layers.Dense(30,activation='relu')(hidden1)
+concat = tf.keras.layers.concatenate([input_A,hidden2])
+output = tf.keras.layers.Dense(1,name='output')(concat)     # activation기본값은 Linear
+model = tf.keras.Model(inputs=[input_A,input_B],outputs=[output])
+model.summary()
+
+
+    # 9) Class 수업
+        # class : 객체를 만드는 구조/틀
+        # instance : 클래스가 실질적으로 객체를 만들었을 때, 그 객체를 부르는 용어
+class CustomNumers:
+    def __init__(self):
+        self._numbers = [n for n in range(1,11)]
+
+a = CustomNumers()
+a[2:5]      # 불가
+a._numbers[2:5]
+
+class CustomNumers:
+    def __init__(self):
+        self._numbers = [n for n in range(1,11)]
+    
+    def __getitem__(self,idx):
+        return self._numbers[idx]
+    
+a = CustomNumers()
+a[2:5]      # 가능 -> __getitem__ 때문
