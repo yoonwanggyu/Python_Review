@@ -226,3 +226,6 @@ class CustomNumers:
     
 a = CustomNumers()
 a[2:5]      # 가능 -> __getitem__ 때문
+
+    # 10) MPG 데이터로 실습 -> colab으로 실습
+https://colab.research.google.com/drive/1g1azaxxvabXN9PzgNqJdWgGb1DcwF5KM?usp=sharing
