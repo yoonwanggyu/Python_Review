@@ -670,4 +670,310 @@ w2v.most_similar(positive=['soldiers'])
 
 
 # 04.18-----------------------------------------------------------------------------------------------------------##
+    
+	# RNN 실습-----------------------------##
+import tensorflow as tf
+print(tf.__version__)
 
+import numpy as np
+a = np.arange(10)
+np.where(a<5,a,10*a)
+
+import matplotlib.pyplot as plt
+
+        # 데이터
+np.random.seed(2020)
+time = np.arange(30 * 12 +1)
+month_time = (time % 30) / 30
+time_series = 20 * np.where(month_time < 0.5,
+                            np.cos(2*np.pi*month_time),
+                            np.cos(2*np.pi*month_time)+np.random.random(361))
+
+plt.figure(figsize = (10, 5))
+plt.title('TimeSeries Data')
+plt.xlabel('Time')
+plt.ylabel('Value')
+plt.plot(np.arange(0, 30 * 11 + 1), time_series[:30 * 11 + 1], color = 'black', alpha = 0.7, label = 'train') # 학습용 데이터
+plt.plot(np.arange(30 * 11, 30 * 12 + 1), time_series[30 * 11:], color = 'orange', label = 'test') # 테스트용 데이터
+plt.legend()
+plt.show()
+
+        # 데이터 전처리
+def make_sequence(time_series, n):
+    x_train, y_train = list(), list()
+
+    for i in range(len(time_series)):
+        x = time_series[i:(i + n)]
+        if (i + n) < len(time_series):
+            x_train.append(x)
+            y_train.append(time_series[i + n])
+        else:
+            break
+
+    return np.array(x_train), np.array(y_train)
+
+n = 10
+x_train, y_train = make_sequence(time_series, n)
+
+x_train = x_train.reshape(-1, n, 1)
+y_train = y_train.reshape(-1, 1)
+
+from sklearn.model_selection import train_test_split
+
+patial_x_train = x_train[:30 * 11]
+patial_y_train = y_train[:30 * 11]
+x_test = x_train[30 * 11:]
+y_test = y_train[30 * 11:]
+
+print('train:', patial_x_train.shape, patial_y_train.shape)
+print('test:',x_test.shape, y_test.shape)
+
+        # 데이터 형태 확인
+test_arr = np.arange(100)
+a, b = make_sequence(test_arr, 10)
+
+for i in range(1, 4):
+    print(a[i],'|', b[i])
+
+        # simple RNN 사용
+from tensorflow.keras.layers import SimpleRNN,Flatten,Dense,Conv1D
+from tensorflow.keras.models import Sequential
+
+model = Sequential()
+model.add(SimpleRNN(units=32,activation='tanh',input_shape=(n,1)))
+model.add(Dense(1,activation='linear'))
+model.compile(optimizer='adam',
+              loss="mse")
+model.summary()
+model.fit(x_train,y_train,epochs=200,batch_size=64)
+
+        # 예측 결과 그려보기
+pred = model.predict(x_test)
+pred_range = np.arange(len(y_train),len(y_train)+len(pred))
+plt.figure(figsize=(15,5))
+plt.title('Prediction')
+plt.xlabel('Time'); plt.ylabel('Value')
+plt.plot(pred_range, y_test.reshape(-1,), color='orange', label='ground-truth')
+plt.plot(pred_range, pred.reshape(-1,), color='blue', label='prediction')
+plt.legend()
+plt.show()
+
+
+
+    # Embedding층을 사용해 단어 임베딩 학습하기-----------------##
+from tensorflow.keras.layers import Embedding
+# 가능한 토큰의 개수(여기서는 1,000으로 단어 인덱스 최댓값 + 1입니다)와 임베딩 차원(여기서는 64)입니다
+embedding_layer = Embedding(1000,64)
+
+
+    # IMDB 데이터 활용-----------SimpleRNN------------------------------------------------##
+from keras.datasets import imdb
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import SimpleRNN, Dense, Embedding
+            # num_words=10000은 이 데이터셋에서 사용할 단어의 최대 개수를 지정하는 인자
+(X_train,y_train),(X_test,y_test) = imdb.load_data(num_words=10000)
+            # pad_sequences 함수는 시퀀스 데이터의 길이를 특정 길이로 맞추기 위해 사용
+            # 만약 시퀀스의 길이가 500보다 짧다면 빈 부분은 0으로 패딩됩니다. 
+            # 만약 시퀀스의 길이가 500을 초과한다면 길이가 500으로 자르게 됩니다.
+pad_X_train = pad_sequences(X_train,maxlen=500)     # 최대길이를 맞춰줌
+pad_X_test = pad_sequences(X_test,maxlen=500)
+
+model = Sequential()
+model.add(Embedding(input_dim=10000,output_dim=32)) # 원핫인코딩을 하지 않고 Embedding 함수로 자동처리
+            # return_sequences = True : 모든 시점의 은닉 상태를 출력
+            # recurrent_sequences = True : 순환되는 은닉 상태에 드롭아웃을 적용
+            # 함께 사용하면, 모든 시점의 은닉 상태를 출력하고 동시에 순환 상태에 드롭아웃을 적용하여 모델의 효율성을 향상시킬 수 있습니다.
+model.add(SimpleRNN(32,return_sequences=True,dropout=0.15,recurrent_dropout=0.15))
+model.add(SimpleRNN(32))
+model.add(Dense(1,activation='sigmoid'))
+model.compile(optimizer='adam',
+              loss='binary_crossentropy',
+              metrics=['acc'])
+history = model.fit(pad_X_train,y_train,
+                    batch_size=32,
+                    epochs=10,
+                    validation_split=0.2)
+
+his_dict = history.history
+loss = his_dict['loss']
+val_loss = his_dict['val_loss'] # 검증 데이터가 있는 경우 val_ 수식어가 붙는다.
+epochs = range(1,len(loss)+1 )
+fig = plt.figure(figsize= (10,5) )
+
+        # 학습 및 검증 손실 그리기
+ax1 = fig.add_subplot(1,2,1)
+ax1.plot(epochs, loss, color = 'blue', label = 'train_loss')
+ax1.plot(epochs, val_loss, color = 'orange', label = 'val_loss')
+ax1.set_title('train and val loss')
+ax1.set_xlabel('epochs')
+ax1.set_ylabel('loss')
+ax1.legend()
+        # 학습 및 검증 정확도 그리기
+acc = his_dict['acc']
+val_acc = his_dict['val_acc']
+ax2 = fig.add_subplot(1,2,2)
+ax2.plot(epochs, acc, color = 'blue', label = 'train_acc')
+ax2.plot(epochs, val_acc, color = 'orange', label = 'val_acc')
+ax2.set_title('train and val acc')
+ax2.set_xlabel('epochs')
+ax2.set_ylabel('acc')
+ax2.legend()
+
+plt.show() 
+
+
+    # 스펨 메일 분류하기------------------------RNN----------------------------------##
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import urllib.request
+from sklearn.model_selection import train_test_split
+from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+
+urllib.request.urlretrieve("https://raw.githubusercontent.com/ukairia777/tensorflow-nlp-tutorial/main/10.%20RNN%20Text%20Classification/dataset/spam.csv", filename="spam.csv")
+data = pd.read_csv('spam.csv', encoding='latin1')
+data[:5]
+del data['Unnamed: 2']
+del data['Unnamed: 3']
+del data['Unnamed: 4']
+
+            # ham : 정상(0) / spham : 비정상(1)
+data['v1'] = data['v1'].replace(['ham','spam'],[0,1])
+data
+
+data.info()
+data.isnull().sum()
+data['v1'].value_counts()
+data['v1'].value_counts().plot(kind='bar')
+plt.show()
+
+X_data = data['v2']
+y_data = data['v1']
+X_train,X_test,y_train,y_test = train_test_split(X_data,y_data,test_size=0.2,random_state=42,stratify=y_data)
+
+tokenizer = Tokenizer()
+tokenizer.fit_on_texts(X_train)
+X_train_encoded = tokenizer.texts_to_sequences(X_train)
+X_train_encoded[:5]
+word_to_index = tokenizer.word_index
+word_to_index
+
+            #빈도수가 낮은 단어들이 훈련 데이터에서 얼만큼의 비중을 차지하는지 확인
+threshold = 2
+total_cnt = len(word_to_index) # 단어의 수
+rare_cnt = 0 # 등장 빈도수가 threshold보다 작은 단어의 개수를 카운트
+total_freq = 0 # 훈련 데이터의 전체 단어 빈도수 총 합
+rare_freq = 0 # 등장 빈도수가 threshold보다 작은 단어의 등장 빈도수의 총 합
+
+for key,value in tokenizer.word_counts.items():
+    total_freq += value
+    if (value < threshold):
+        rare_cnt += 1
+        rare_freq += value
+    
+print('등장 빈도가 %s번 이하인 희귀 단어의 수: %s'%(threshold - 1, rare_cnt))
+print("단어 집합(vocabulary)에서 희귀 단어의 비율:", (rare_cnt / total_cnt)*100)
+print("전체 등장 빈도에서 희귀 단어 등장 빈도 비율:", (rare_freq / total_freq)*100)
+
+vocab_size = len(word_to_index)+1
+vocab_size
+print('메일의 최대 길이 : %d' % max(len(sample) for sample in X_train_encoded))
+print('메일의 평균 길이 : %f' % (sum(map(len, X_train_encoded))/len(X_train_encoded)))
+plt.hist([len(sample) for sample in X_data], bins=50)
+plt.xlabel('length of samples')
+plt.ylabel('number of samples')
+plt.show()
+
+            # 길이 맞추기
+X_train_padded = pad_sequences(X_train_encoded,maxlen=189)
+X_train_padded.shape
+
+from tensorflow.keras.layers import SimpleRNN, Embedding, Dense
+from tensorflow.keras.models import Sequential
+    
+model = Sequential()
+model.add(Embedding(vocab_size,32))
+model.add(SimpleRNN(32))
+model.add(Dense(1,activation='sigmoid'))
+model.summary()
+model.compile(optimizer='adam',
+              loss="binary_crossentropy",
+              metrics = ['acc'])
+history = model.fit(X_train_padded,y_train,
+                    epochs=5,
+                    batch_size=64,
+                    validation_split=0.2)
+
+            # 테스트
+X_test_encoded = tokenizer.texts_to_sequences(X_test)
+X_test_padded = pad_sequences(X_test_encoded,maxlen=189)
+model.evaluate(X_test_padded,y_test)
+
+epochs = range(1, len(history.history['loss']) + 1)
+plt.plot(epochs, history.history['loss'])
+plt.plot(epochs, history.history['val_loss'])
+plt.title('model loss')
+plt.ylabel('loss')
+plt.xlabel('epoch')
+plt.legend(['train', 'val'], loc='upper right')
+plt.show()
+
+
+# IMDB 데이터 활용-----------LSTM------------------------------------------------##
+from tensorflow.keras.datasets import imdb
+
+(X_train,y_train), (X_test,y_test) = imdb.load_data()
+len(X_train)
+len(X_test)
+X_test[0]
+        # X-train데이터 안에 있는 리스트들의 길이 제기
+len_result = [len(s) for s in X_train]
+        # 리스트들의 길이 중 가장 큰 길이 확인
+np.max(len_result)
+        # 리스트들의 길이 평균 확인
+np.mean(len_result)
+
+        # 모델 만들기
+                # 위에서 max와 mean보고 임의로 5000개까지만
+(X_train,y_train),(X_test,y_test) = imdb.load_data(num_words=5000)
+X_train_padded = pad_sequences(X_train,maxlen=500)
+X_test_padded = pad_sequences(X_test,maxlen=500)
+
+from tensorflow.keras.layers import LSTM
+model = Sequential()
+model.add(Embedding(5000,120))
+model.add(LSTM(120))
+model.add(Dense(1,activation='sigmoid'))
+model.compile(optimizer='adam',
+              loss='binary_crossentropy',
+              metrics=['acc'])
+histoty = model.fit(X_train_padded,y_train,
+                    batch_size=64,
+                    epochs=15,
+                    validation_split=0.2)
+model.evaluate(X_test_padded,y_test)
+
+hist_dict = history.history
+hist_dict.keys()
+
+loss=hist_dict['loss']
+val_loss=hist_dict['val_loss']
+epochs=range(1, len(hist_dict['loss'])+1)
+plt.plot(epochs, loss, 'bo', label='Training loss')
+plt.plot(epochs, val_loss, 'b', label='Validation loss')
+plt.title('Training and validation loss')
+plt.xlabel('Epochs')
+plt.ylabel('Loss')
+plt.legend()
+plt.show()
+
+plt.clf()
+plt.plot(epochs, hist_dict['acc'], 'bo', label='Training acc')
+plt.plot(epochs, hist_dict['val_acc'], 'b', label= 'valadation acc')
+plt.title('Training and validation accuracy')
+plt.xlabel('Epochs')
+plt.ylabel('Accuracy')
+plt.legend()
+plt.show()
