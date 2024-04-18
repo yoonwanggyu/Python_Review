@@ -667,3 +667,7 @@ f.close()
 w2v = gensim.models.KeyedVectors.load_word2vec_format('./vectors.txt', binary=False)
 
 w2v.most_similar(positive=['soldiers'])
+
+
+# 04.18-----------------------------------------------------------------------------------------------------------##
+
