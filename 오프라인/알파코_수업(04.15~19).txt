@@ -977,3 +977,36 @@ plt.xlabel('Epochs')
 plt.ylabel('Accuracy')
 plt.legend()
 plt.show()
+
+
+# 04.19-----------------------------------------------------------------------------------------------------------##
+
+
+    # np로 RNN 구현하기-----------##
+
+import numpy as np
+
+timesteps = 10      # 문장의 길이
+input_features = 4       # 단어 벡터의 차원
+output_features = 8      # 은닉 상태의 크기(메모리 셀의 용량) / hidden_state에 크기
+
+inputs = np.random.random((timesteps,input_features))    # 입력
+hidden_state_t = np.zeros((output_features,))           # 은닉상태 만들기
+
+        # input에서 hidden_state로 가는 가중치(hidden_state크기,input 크기)
+Wx = np.random.random((output_features,input_features)) 
+        # t-1 hidden_state에서 t hidden으로 가는 가중치(t hidden_State크기,t-1 hidden_state크기)
+Wh = np.random.random((output_features,output_features))
+        # hidden_State로 가는 편향 크기
+b = np.random.random((output_features,))
+
+successive_output = []
+for input_t in inputs:
+    output_t = np.tanh(np.dot(Wx,input_t)+np.dot(Wh,hidden_state_t)+b)  # 하이퍼탄젠트(입력층*가중치 + 은닉층*가중치 + 편향)
+    successive_output.append(output_t)
+    hidden_state_t = output_t       # 은닉층 전 은닉층 반영해서 계속 업데이트
+
+successive_output
+        # 리스트에 있는 배열들을 모두 이어 붙여서 하나의 큰 배열로 만듦(행)
+final_successive_output = np.concatenate(successive_output,axis=0)
+final_successive_output
