@@ -1010,3 +1010,107 @@ successive_output
         # 리스트에 있는 배열들을 모두 이어 붙여서 하나의 큰 배열로 만듦(행)
 final_successive_output = np.concatenate(successive_output,axis=0)
 final_successive_output
+
+
+# 04.20-----------------------------------------------------------------------------------------------------------##
+
+    # Seq2Seq 실습------------##-------------------
+
+        # 프랑스 - 영어 번역(병렬 코퍼스 사용)
+
+import pandas as pd
+import tensorflow as tf
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+from tensorflow.keras.utils import to_categorical
+
+lines = pd.read_csv("C:/Users/Administrator/Downloads/fra-eng/fra.txt",names=['src','tar','lic'],sep='\t')
+lines
+
+del lines['lic']
+len(lines)
+lines
+        # 1) 전체 데이터에서 6만개만 사용(src,tar 열만 사용)
+lines = lines.loc[:,'src':'tar']
+lines = lines[:60000]
+lines.sample(10)
+
+        # 2) 번역 문장에 해당되는 프랑스어 데이터는 앞서 배웠듯이 시작을 의미하는 심볼 <sos>과 종료를 의미하는 심볼 <eos>을 넣어주어야 함
+        #    디코더에서 번역하기 위해
+lines.tar = lines.tar.apply(lambda x : '\t ' + x + ' \n')
+lines.sample(10)
+
+        # 3) 문자 집합 생성
+        #    단어 집합이 아니라 문자 집합이라고 하는 이유는 토큰 단위가 단어가 아니라 문자이기 때문입니다.
+        #    단어와 문자의 차이점은 문자는 영어가 아니라도 물음표/느낌표등 포함
+src_vocab = set()
+for line in lines.src:
+    for chr in line:
+        src_vocab.add(chr)
+
+tar_vocab = set()
+for line in lines.tar:
+    for chr in line:
+        tar_vocab.add(chr)
+
+        # 4) 문자 집합 크기 확인
+len(src_vocab) + 1 
+len(tar_vocab) + 1
+
+        # 5) 각 문자에 인덱스 부여
+        #    정렬을 먼저하고 인덱스 부여
+src_vocab = sorted(list(src_vocab))
+tar_vocab = sorted(list(tar_vocab))
+src_vocab_index = dict([(word,i+1) for i,word in enumerate(src_vocab)])
+tar_vocab_index = dict([(word,i+1) for i,word in enumerate(tar_vocab)])
+
+        # 6) 인덱스가 부여된 문자 집합으로부터 갖고있는 훈련 데이터에 정수 인코딩을 수행
+encoder_input = []
+for line in lines.src:
+    encoded_line=[]
+    for chr in line:
+        encoded_line.append(src_vocab_index[chr])
+    encoder_input.append(encoded_line)
+encoder_input[:5]
+
+        # 7) 디코더의 입력이 될 프랑스어 데이터에 대해서 정수 인코딩을 수행
+decoder_input = []
+for line in lines.tar:
+    encoded_line = []
+    for chr in line:
+        encoded_line.append(tar_vocab_index[chr])
+    decoder_input.append(encoded_line)
+decoder_input[:5]
+
+        # 8) 아직 정수 인코딩을 수행해야 할 데이터가 하나 더 남았습니다.
+        #    디코더의 예측값과 비교하기 위한 실제값이 필요합니다. 그런데 이 실제값에는 시작 심볼에 해당되는 <sos>가 있을 필요가 없습니다.
+        #    Dense와 Softmax 위에 있는 단어들
+        #    정수 인코딩 과정에서 <sos>를 제거합니다. 즉, 모든 프랑스어 문장의 맨 앞에 붙어있는 '\t'를 제거하도록 합니다.
+decoder_target = []
+for line in lines.tar:
+    timestep = 0
+    encoded_line = []
+    for chr in line:
+        if timestep > 0:
+            encoded_line.append(tar_vocab_index[chr])
+        timestep += 1
+    decoder_target.append(encoded_line)
+decoder_target[:5]      # decoder_input 데이터와 비교하면 decoder_input에서는 모든 문장의 앞에 붙어있던 숫자 1이 decoder_target에서는 제거된 것을 볼 수 있습니다. 
+                        # '\t'가 인덱스가 1이므로 정상적으로 제거된 것입니다.
+
+        # 9) 패딩
+max_src_len = max([len(line) for line in lines.src])
+max_tar_len = max([len(line) for line in lines.tar])
+
+        # 10) 영어 데이터는 영어 샘플들끼리, 프랑스어는 프랑스어 샘플들끼리 길이를 맞추어서 패딩하면 됩니다.
+        #     padding='pre': 시퀀스의 앞부분에 패딩을 추가합니다. 즉, 시퀀스의 시작 부분에 패딩이 채워집니다.
+        #     padding='post': 시퀀스의 뒷부분에 패딩을 추가합니다. 즉, 시퀀스의 끝 부분에 패딩이 채워집니다.
+encoder_input = pad_sequences(encoder_input,maxlen=max_src_len,padding='post')
+decoder_input = pad_sequences(decoder_input,maxlen=max_tar_len,padding='post')
+decoder_target = pad_sequences(decoder_target,maxlen=max_tar_len,padding='post')
+
+        # 11) 모든 값에 대해서 원-핫 인코딩을 수행합니다. 문자 단위 번역기므로 워드 임베딩은 별도로 사용되지 않으며, 
+        #     예측값과의 오차 측정에 사용되는 실제값뿐만 아니라 입력값도 원-핫 벡터를 사용하겠습니다.
+        #     보통 embedding층을 이용하지만 원-핫인코딩도 가능하다는거~
+encoder_input = to_categorical(encoder_input)
+decoder_input = to_categorical(decoder_input)
+decoder_target = to_categorical(decoder_target)
