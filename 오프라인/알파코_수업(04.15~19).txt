@@ -1114,3 +1114,36 @@ decoder_target = pad_sequences(decoder_target,maxlen=max_tar_len,padding='post')
 encoder_input = to_categorical(encoder_input)
 decoder_input = to_categorical(decoder_input)
 decoder_target = to_categorical(decoder_target)
+
+        # 12) 교사 강요
+        #     현재 시점의 디코더 셀의 입력은 오직 이전 디코더 셀의 출력을 입력으로 받는다고 설명하였는데 decoder_input이 왜 필요할까요?
+        #     => 훈련 과정에서는 이전 시점의 디코더 셀의 출력을 현재 시점의 디코더 셀의 입력으로 넣어주지 않고, 
+        #        이전 시점의 실제값을 현재 시점의 디코더 셀의 입력값으로 하는 방법을 사용할 겁니다.
+
+        #     => 그 이유는 이전 시점의 디코더 셀의 예측이 틀렸는데 이를 현재 시점의 디코더 셀의 입력으로 사용하면 
+        #        현재 시점의 디코더 셀의 예측도 잘못될 가능성이 높고 이는 연쇄 작용으로 디코더 전체의 예측을 어렵게 합니다.
+
+        # 13) 모델 설계 + 교사 강요를 사용하여 학습
+from tensorflow.keras.layers import Input,LSTM,Embedding,Dense
+from tensorflow.keras.models import Model
+import numpy as np
+
+encoder_inputs = Input(shape=(None,src_vocab_size))     # 일반적으로 신경망에서는 입력 데이터의 크기를 미리 정함. 그러나 시퀀스 모델에서는 입력 시퀀스의 길이가 다양할 수 있기 때문에 입력의 길이를 고정할 수 없습니다. 따라서 None을 사용하여 입력 시퀀스의 길이를 가변적으로 처리할 수 있도록 합니다.
+encoder_lstm = LSTM(256,return_state=True)      # return_state=True를 설정함으로써 LSTM 층은 순전파 과정에서 출력과 마지막 상태를 반환하게 되어, 이를 활용하여 디코더의 초기 상태로 사용할 수 있습니다. 인코더의 내부 상태를 디코더로 넘겨주어야 하기 때문에 return_state=True로 설정
+encoder_outpus,state_h,state_c = encoder_lstm(encoder_inputs)       # encoder_outputs은 여기서는 불필요
+encoder_states = [state_h,state_c]                                  # encoder_states = [state_h, state_c]
+                                                                    # encoder_states를 디코더에 전달하므로서 이 두 가지 상태 모두를 디코더로 전달합니다. 이것이 앞서 배운 '컨텍스트 벡터'입니다.
+decoder_inputs = Input(shape=(None,tar_vocab_size))
+decoder_lstm = LSTM(256,return_sequences=True,return_state=True)
+decoder_outputs, _, _ = decoder_lstm(decoder_inputs,initial_state = encoder_states)     # 디코더는 인코더의 마지막 은닉 상태(state_h,state_c)를 초기 은닉 상태로 사용
+decoder_softmax_layer = Dense(tar_vocab_size,activation='softmax')
+decoder_outputs = decoder_softmax_layer(decoder_outputs)
+
+model = Model([encoder_inputs,decoder_inputs],decoder_outputs)
+model.compile(optimizer='rmsprop',
+              loss = 'categorical_crossentropy')
+model.fit(x=[encoder_input,decoder_input],
+          y=decoder_target,
+          batch_size=64,
+          epochs=10,
+          validation_split=0.2)
