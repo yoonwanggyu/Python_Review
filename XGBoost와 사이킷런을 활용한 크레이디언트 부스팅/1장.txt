@@ -72,3 +72,45 @@ scores = cross_val_score(model,x,y,scoring='neg_mean_squared_error',cv=10)
 rmse = np.sqrt(-scores)
 print("회귀 rmse:",np.round(rmse,2))
 print('RMSE 평균: %0.2f' % (rmse.mean()))
+
+       # <회귀 모델>---------------------------------------
+    # casual + registered = cnt 임으로 삭제
+df_bikes = df_bikes.drop(['casual','registered'],axis=1)
+df_bikes.to_csv('bike_rentals_cleaned.csv',index=False)
+x = df_bikes.iloc[:,:-1]
+y = df_bikes.iloc[:,-1]
+            # 1) 선형 회귀
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+X_train,X_test,y_train,y_test = train_test_split(x,y,random_state=2)
+import warnings
+warnings.filterwarnings('ignore')
+lin_reg = LinearRegression()
+lin_reg.fit(X_train,y_train)
+y_pred = lin_reg.predict(X_test)
+from sklearn.metrics import mean_squared_error
+import numpy as np
+mse = mean_squared_error(y_test,y_pred)
+rmse = np.sqrt(mse)
+print("RMSE: %0.2f" % (rmse))
+            # 2) XGBRegressor
+from xgboost import XGBRegressor
+xg_reg = XGBRegressor()
+xg_reg.fit(X_train,y_train)
+y_pred = xg_reg.predict(X_test)
+mse = mean_squared_error(y_test,y_pred)
+rmse = np.sqrt(mse)
+print("RMSE: %0.2f" % (rmse))       # 더 낮음!!
+            # 3) 교차검증(K-fold cross-validation) + 선형회귀
+from sklearn.model_selection import cross_val_score
+model = LinearRegression()
+scores = cross_val_score(model,x,y,scoring='neg_mean_squared_error',cv=10)
+rmse = np.sqrt(-scores)
+print('회귀 rmse:',np.round(rmse,2))
+print("RNSE 평균: %0.2f" %(rmse.mean()))
+            # 4) 교차검증 + XGBRegressor
+model = XGBRegressor()
+scores = cross_val_score(model,x,y,scoring='neg_mean_squared_error',cv=10)
+rmse = np.sqrt(-scores)
+print("회귀 rmse:",np.round(rmse,2))
+print('RMSE 평균: %0.2f' % (rmse.mean()))
