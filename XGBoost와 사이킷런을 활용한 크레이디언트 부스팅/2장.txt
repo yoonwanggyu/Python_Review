@@ -1,0 +1,94 @@
+# 2장) 결정트리----------------------------------##--------------------------------------------------------------------------
+import pandas as pd
+import numpy as np
+import warnings
+warnings.filterwarnings('ignore')
+from sklearn.model_selection import train_test_split
+X = df_census.iloc[:,:-1]
+y = df_census.iloc[:,-1]
+X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=0.2,random_state=2)
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import accuracy_score
+model = DecisionTreeClassifier(random_state=2)
+model.fit(X_train,y_train)
+y_pred = model.predict(X_test)
+accuracy_score(y_pred,y_test)
+model.score(X_test,y_test)
+            # 시각화
+import matplotlib.pyplot as plt
+from sklearn.tree import plot_tree
+plt.figure(figsize=(13,8))
+plot_tree(model,max_depth=2,feature_names=list(X.columns),class_names=['0','1'],filled=True,rounded=True,fontsize=10)
+plt.show()
+        # 하이퍼파라미터 조정
+df_bikes = pd.read_csv("C:/Users/Administrator/bike_rentals_cleaned.csv")
+X_bikes = df_bikes.iloc[:,:-1]
+y_bikes = df_bikes.iloc[:,-1]
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.model_selection import train_test_split,cross_val_score
+model = DecisionTreeRegressor()
+scores = cross_val_score(model,X_bikes,y_bikes,scoring='neg_mean_squared_error',cv=5)
+rmse = np.sqrt(-scores)
+rmse.mean()             # 과적합됨
+
+X_train,X_test,y_train,y_test = train_test_split(X_bikes,y_bikes,test_size=0.2,random_state=42)
+model = DecisionTreeRegressor()
+model.fit(X_train,y_train)
+from sklearn.metrics import mean_squared_error
+y_pred = model.predict(X_train)
+model_mse = mean_squared_error(y_train,y_pred)
+model_rmse = np.sqrt(model_mse)
+model_rmse      # 훈련 세트의 성능을 확인한 결과 0.0 결과가 나옴 -> 과대적합!!
+        # 모델의 노드 수 확인
+X_train.shape
+leaf_node_count = 0
+tree = model.tree_
+for i in range(tree.node_count):
+    if (tree.children_left[i] == -1) and (tree.children_right[i] == -1):
+        leaf_node_count += 1
+        if tree.n_node_samples[i] > 1:
+            print("노드 인덱스: ",i, '샘플 개수: ',tree.n_node_samples[i])
+print('전체 리프 노드 개수: ', leaf_node_count)         # 훈련 세트 크기가 584 / 전체 리프 노드가 585 -> 차이 없음
+        # GridSearchCV
+from sklearn.model_selection import GridSearchCV
+model = DecisionTreeRegressor(random_state=2)
+params = {'max_depth' : [None,2,3,4,6,8,10,20]}
+grid = GridSearchCV(model,
+                    param_grid=params,
+                    scoring='neg_mean_squared_error',
+                    cv=5,
+                    return_train_score=True,
+                    n_jobs=1)
+grid.fit(X_train,y_train)
+best_params = grid.best_params_
+print("최상의 매개변수: ",best_params)
+best_score = np.sqrt(-grid.best_score_)
+print("훈련 점수: {:.3f}".format(best_score))
+
+best_model = grid.best_estimator_
+y_pred = best_model.predict(X_test)
+rmse_test = mean_squared_error(y_test,y_pred)**0.5
+print("테스트 점수: {:.3f}".format(rmse_test))
+
+        # GridSearchCV 함수
+df_bikes = pd.read_csv("C:/Users/Administrator/bike_rentals_cleaned.csv")
+X_bike = df_bikes.iloc[:,:-1]
+y_bike = df_bikes.iloc[:,-1]
+X_train,X_test,y_train,y_test = train_test_split(X_bike,y_bike,random_state=42,test_size=0.3)
+def grid_search(params, model=DecisionTreeRegressor(random_state=2)):
+    grid_reg = GridSearchCV(model, params,scoring='neg_mean_squared_error',cv=5,n_jobs=1)
+    grid_reg.fit(X_train,y_train)
+    best_params = grid_reg.best_params_
+    print("최상의 매개변수: ",best_params)
+    best_score = np.sqrt(-grid_reg.best_score_)     # 교차 검증에서 계산된 검증 폴드의 평균 점수가 저장되어 있음
+    print("훈련 점수: {:.3f}".format(best_score))
+    best_model = grid_reg.best_estimator_           # best_estimator_를 쓰나 그냥 grid_reg.predict하나 똑같음 = 이미 grid_reg에 베스트 모델이 할당되어 있음
+    y_pred = best_model.predict(X_test)
+    rmse_test = mean_squared_error(y_test,y_pred)**0.5
+    print("테스트 점수:{:.3f}".format(rmse_test))
+X_train.shape
+grid_search(params={"min_samples_leaf":[1,2,4,6,8,10,20,30]})
+grid_search(params={'max_depth':[None,2,3,4,6,8,10,20],
+                    'min_samples_leaf':[1,2,4,6,8,10,20,30]})
+grid_search(params={'max_depth':[6,7,8,9],
+                    'min_samples_leaf':[3,5,7,9]})
