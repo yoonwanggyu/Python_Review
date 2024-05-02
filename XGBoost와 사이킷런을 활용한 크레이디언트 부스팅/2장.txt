@@ -92,3 +92,56 @@ grid_search(params={'max_depth':[None,2,3,4,6,8,10,20],
                     'min_samples_leaf':[1,2,4,6,8,10,20,30]})
 grid_search(params={'max_depth':[6,7,8,9],
                     'min_samples_leaf':[3,5,7,9]})
+
+        # 실습) 심장 질환 예측하기
+import pandas as pd
+from sklearn.model_selection import train_test_split,cross_val_score
+from sklearn.tree import DecisionTreeClassifier
+import numpy as np
+import warnings
+warnings.filterwarnings('ignore')
+from sklearn.metrics import accuracy_score
+
+df_heart = pd.read_csv("C:/Users/Administrator/Downloads/heart_disease.csv")
+df_heart.head()
+df_heart.info()
+df_heart.isnull().sum()
+
+X = df_heart.iloc[:,:-1]
+y = df_heart.iloc[:,-1]
+X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=0.2,random_state=42)
+                # 기본 모델(튜닝 전)
+model = DecisionTreeClassifier(random_state=2)
+scores = cross_val_score(model,X,y,cv=5)
+print("정확도:",np.round(scores,2))
+print("정확도 평균: %0.2f" % (scores.mean()))
+                # RandomizedSearchCV 하이퍼파라미터 탐색
+from sklearn.model_selection import RandomizedSearchCV
+def randomized_Search_cv(params,runs=20,model=DecisionTreeClassifier(random_state=2)):
+    rand_clf = RandomizedSearchCV(model,params,n_iter=runs,cv=5,n_jobs=-1,scoring='accuracy')
+    rand_clf.fit(X_train,y_train)
+    best_model = rand_clf.best_estimator_
+    best_score = rand_clf.best_score_
+    print("훈련 점수 : {:.3f}".format(best_score))
+    y_pred = best_model.predict(X_test)
+    accuracy = accuracy_score(y_pred,y_test)
+    print("테스트 점수 : {:.3f}".format(accuracy))
+    return best_model
+
+randomized_Search_cv(params={'max_depth':[None,2,3,4,6,8],
+                             'max_features':['sqrt',0.95,0.90,0.85,0.80,0.75,0.7],
+                             'min_samples_leaf':[1,0.01,0.02,0.03,0.04],
+                             'max_leaf_nodes':[10,15,20,25,30,35,40,None],
+                             'min_impurity_decrease':[0.0,0.0005,0.005,0.05,0.10,0.15,0.20],
+                             'min_samples_split':[2,3,4,6,8,10]})
+                # 베스트 모델(튜닝 후)
+best_model = randomized_Search_cv(params={'max_depth':[None,6,7],
+                                        'max_features':['sqrt',0.95,0.85,0.78],
+                                        'max_leaf_nodes':[45,None],
+                                        'min_impurity_decrease':[0.005,0.05],
+                                        'min_samples_leaf':[1,0.035,0.04,0.045,0.05],
+                                        'min_samples_split':[2,9,10],
+                                        'min_weight_fraction_leaf':[0.0,0.05,0.06,0.07]},runs=100)
+scores = cross_val_score(best_model,X,y,cv=5)
+print("정확도:",np.round(scores,2))
+print("정확도 평균: %0.2f"%(scores.mean()))
