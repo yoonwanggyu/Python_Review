@@ -1,0 +1,52 @@
+# 04.24----------------------------------------------------------------------##-------------------------------------------------------------------------------------------------------------------
+import pandas as pd
+from transformers import BertTokenizer
+
+        # 서브워드 토크나이저 : WordPiece 
+tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")  # bert-base 토크나이저
+result = tokenizer.tokenize("Here is the sentence I want embedding for.")
+result      #   ##은 서브워드들은 단어의 중간부터 등장하는 서브워드라는 것을 알려주기 위해 단어 집합 생성 시 표시해둔 기호
+tokenizer.vocab['here']         # 정수 인코딩을 위해서 단어 집합 내부적으로 2182라는 정수로 맵핑되어져 있다.
+tokenizer.vocab['embeddings']   # 해당 단어가 존재하지 않는다는 의미
+
+
+        # 1) 마스크 언어 모델과 토크나이저(모델과 동일한 토크나이저 사용)
+from transformers import TFBertForMaskedLM
+from transformers import AutoTokenizer
+masked_model = TFBertForMaskedLM.from_pretrained("bert-base-uncased")
+tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+inputs = tokenizer('Soccer is a really fun [MASK].',return_tensors='tf')    # 정수 인코딩
+print(inputs['input_ids'])      # 정수 인코딩 결과 확인
+print(inputs['token_type_ids']) # 문장을 구분하는 세그먼트 인코딩 결과
+print(inputs['attention_mask']) # 실제 단어와 패딩 토큰을 구분하는 용도
+from transformers import FillMaskPipeline
+pip = FillMaskPipeline(model = masked_model,tokenizer=tokenizer)
+pip('Soccer is a really fun [MASK].')
+
+        # 1-1) 한국어 마스크 언어 모델
+model = TFBertForMaskedLM.from_pretrained('klue/bert-base',from_pt = True)
+tokenizer = AutoTokenizer.from_pretrained('Klue/bert-base')
+inputs = tokenizer("축구는 정말 재미있는 [MASK]다.",return_tensors='tf')
+print(inputs['input_ids'])
+print(inputs['token_type_ids'])
+print(inputs['attention_mask'])
+pip = FillMaskPipeline(model=model,tokenizer=tokenizer)
+pip('축구는 정말 재미있는 [MASK]다.')  
+
+
+        # 2) 다음 문장 예측하기
+import tensorflow as tf
+from transformers import TFBertForNextSentencePrediction
+from transformers import AutoTokenizer
+sen_model = TFBertForNextSentencePrediction.from_pretrained('bert-base-uncased')
+tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased')
+prompt = "In Italy, pizza served in formal settings, such as at a restaurant, is presented unsliced."
+next_sentence = "pizza is eaten with the use of a knife and fork. In casual settings, however, it is cut into wedges to be eaten while held in the hand."
+encoding = tokenizer(prompt,next_sentence,return_tensors='tf')      # 정수 인코딩
+print(encoding['input_ids'])       # 101(CLS) / 102(SEP) 특별 토큰
+print(tokenizer.decode(encoding['input_ids'][0]))
+print(encoding['token_type_ids'])
+logits = sen_model(encoding['input_ids'],token_type_ids=encoding['token_type_ids'][0])
+probs = tf.nn.softmax(logits)
+print(probs)
+print("최종 예측 레이블 : ", tf.math.argmax(probs,axis=-1).numpy())

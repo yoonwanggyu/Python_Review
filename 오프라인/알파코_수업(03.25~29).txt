@@ -1,0 +1,783 @@
+# 03.25------------------------------------------------------------------------------------------------------------####
+
+    # 정수 인코딩-----------------------------------------------------------------------##
+    # 단어를 빈도수 순으로 정렬한 단어 집합(vocabulary)을 만들고 => 빈도수가 높은 순서대로 차례로 낮은 숫자부터 정수를 부여하는 방법이 있습니다.
+import nltk
+from nltk.tokenize import sent_tokenize
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
+
+        # 1) 문장 토큰화
+nltk.download('popular')
+text = "A barber is a person. a barber is good person. a barber is huge person. he Knew A Secret! The Secret He Kept is huge secret. Huge secret. His barber kept his word. a barber kept his word. His barber kept his secret. But keeping and keeping such a huge secret to himself was driving the barber crazy. the barber went up a huge mountain."
+text = sent_tokenize(text)
+text
+        # 2) 각 문장을 단어 토큰화 후 불용어 제외한 단어들만 추출
+vocab = {}
+sentences = []
+stopwords = set(stopwords.words('english'))
+
+for i in text:
+    sentence = word_tokenize(i)
+    result = []
+
+    for word in sentence:
+        word = word.lower()
+        if word not in stopwords:
+            if len(word) > 2:
+                result.append(word)
+                if word not in vocab:
+                    vocab[word] = 0
+                vocab[word] += 1
+    sentences.append(result)
+
+sentences
+vocab.items()
+
+        # 3) 빈도수에 따른 정렬
+vocab_sorted = sorted(vocab.items(), key = lambda x : x[1], reverse=True)
+vocab_sorted
+
+        # 4) 빈도가 1인 단어 제외 -> 다시 빈도수가 많을 수록 1 부여
+word_to_index = {}
+i = 0
+for (word,freq) in vocab_sorted:
+    if freq > 1:
+        i += 1
+        word_to_index[word] = i
+
+word_to_index
+
+        # 5) 상위 5개만 추출
+word_freq = [w for w,c in word_to_index.items() if c >= 6]
+for w in word_freq:
+    del word_to_index[w]
+word_to_index
+
+        # 6) 이제 word_to_index에는 빈도수가 높은 상위 5개의 단어만 저장되었습니다. 
+        #    이제 word_to_index를 사용하여 단어 토큰화가 된 상태로 저장된 sentences에 있는 각 단어를 정수로 바꾸는 작업을 하겠습니다.
+        #    Out-Of-Vocabulary(단어 집합에 없는 단어)의 약자로 'OOV'라고 합니다.
+word_to_index['OOV'] = len(word_to_index) + 1       # 단어 집합에 없는 단어는 6으로 정수 인코딩
+encoded = []
+for s in sentences:
+    temp = []
+    for w in s:
+        try:
+            temp.append(word_to_index[w])
+        except KeyError:
+            temp.append(word_to_index['OOV'])
+    encoded.append(temp)
+
+encoded
+
+
+    # counter()함수 사용---------------------------------##
+from collections import Counter
+sentences
+        # 1) 하나의 리스트에 단어들 나열
+words = sum(sentences,[])
+        # 2) 함수로 한번에 갯수 카운트 가능
+vocab = Counter(words)
+        # 3) 상위 5개만 출력
+vocab = vocab.most_common(5)
+        # 4) 정수 인코딩 / 빈도수가 높은 순서대로 1~
+vocab_to_index = {}
+i = 0
+for w,f in vocab:
+    i += 1
+    vocab_to_index[w] = i
+
+vocab_to_index
+
+
+    # (*args) / (*kwargs) 이용 => 여러개의 인자를 받기 위해--------------------------------------------------------------##
+        # 리스트는 계산이 안됨 => 각각 계산이 안되기 때문에 오류 => 적용 가능한 함수를 만들어 줘야 함!!
+
+def test(*args): #args : argument *(Asterisk) : 개수가 정해지지 않은 변수를 함수의 파라미터로 사용하는 것.
+    #args:tuple
+    print(args)
+test(1,2,3,4)
+
+def add_all(*inputs):
+    return sum(inputs)
+add_all(1,2,3,4,5,6,7,8,9,10)
+
+def add_all(*inputs):
+    add = 0
+    for i in inputs:    # 행에 접근
+        for j in i:     # 열에 접근
+            add += j
+    print(add)
+add_all([1,2,3,4,5,6,7,8,9,10])
+
+def add_all(*inputs):   #  list와 tuple을 동시에 받을 수 있는 코드
+    add = 0
+    for i in range(len(inputs)):
+        if type(inputs[i]) == list:
+            for j in inputs[i]:
+                add += j
+        else:
+            add += inputs[i]
+    return add
+print(add_all(1,2,3,4,5,6,7,8,9,10))
+print(add_all([1,2,3,4,5,6,7,8,9,10]))
+
+def dict_1(**kwargs):  # 매개변수가 몇개 입력으로 오는지 모를 때 -> 딕셔너리로 반환
+    print(kwargs)
+dict_1(a=1,b=2,c=3)
+
+
+    # NLTK의 FreqDist---------------------------------------------------------------------------------##
+    # FreqDist의 입력으로는 반드시 토큰화가 이루어진 상태여야 한다.
+
+from nltk import FreqDist
+import numpy as np
+sentences = ['barber', 'barber', 'person', 'barber', 'good', 'person']
+
+        # np.hstack으로 문장 구분을 제거하여 입력으로 사용 . ex) ['barber', 'person', 'barber', 'good' ... 중략 ...
+vocab = FreqDist(np.hstack(sentences))   # np.hstack() 함수는 주어진 배열들을 수평(가로)으로 합치는 기능을 해요! 이 함수는 1차원 배열을 수평(가로)으로 쌓을 때 많이 사용
+
+vocab = vocab.most_common(5)
+
+        # 정수 인코딩
+word_to_index = {word[0] : index + 1 for index,word in enumerate(vocab)}
+
+
+    # 품사 태깅-------------------------------------------------------------------------------------------------##
+    # 문장을 형태소 단위로 분리 한 후, 해당 형태소의 품사를 태깅하는 것을 의미
+
+from nltk.tag import pos_tag
+nltk.download('punkt')
+nltk.download('averaged_perceptron_tagger')
+
+text = "I am actively looking for Ph.D. students. and you are a Ph.D. student."
+word = word_tokenize(text)
+pos_tag(word)
+
+
+# 03.26---------------------------------------------------------------------------------------------------------------------------------------####
+
+    # kolaw : 헌법 말뭉치
+from konlpy.corpus import kolaw
+law = kolaw.open('constitution.txt').read()
+law[:40]
+
+    # kobill : 국회 법안 말뭉치
+from konlpy.corpus import kobill
+bill = kobill.open('1809890.txt').read()
+bill[:40]
+
+from konlpy.tag import Okt
+from konlpy.tag import Komoran
+from konlpy.tag import Kkma
+from konlpy.tag import Hannanum
+
+hannaum = Hannanum()
+kkma = Kkma()
+okt = Okt()
+komoran = Komoran()
+        # 명사 추출
+print(hannaum.nouns(law[:40]))
+print(kkma.nouns(law[:40]))
+print(okt.nouns(law[:40]))
+print(komoran.nouns(law[:40]))
+        # 품사 부착
+print(hannaum.pos(law[:40]))
+print(kkma.pos(law[:40]))
+print(okt.pos(law[:40]))
+print(komoran.pos(law[:40]))
+
+    # SONLPY-------------------------------------------------------------------------------------------------------------##
+    # 텍스트 데이터에서 특정 문자 시퀀스가 함께 자주 등장하는 빈도가 높고, 
+    # 앞 뒤로 조사 또는 완전히 다른 단어가 등장하는 것을 고려해서 해당 문자 시퀀스를 형태소라고 판단하는 단어 토크나이저라면 어떨까요?
+    # soynlp는 기본적으로 학습에 기반한 토크나이저이므로 학습에 필요한 한국어 문서를 다운로드합니다.
+
+import urllib.request
+from soynlp import DoublespaceLineCorpus
+from soynlp.word import WordExtractor
+urllib.request.urlretrieve("https://raw.githubusercontent.com/lovit/soynlp/master/tutorials/2016-10-20.txt", filename="2016-10-20.txt")
+
+    # 훈련 데이터를 다수의 문서로 분리
+corpus = DoublespaceLineCorpus("2016-10-20.txt")
+len(corpus)  # 문서의 갯수
+
+    # 다수의 문서에서 3개만 가져오기
+i = 0
+for document in corpus:
+    if len(document) > 0:
+        print(document)
+        i += 1
+    if i == 3:
+        break
+
+    # 단어 추출
+word_extractor = WordExtractor()
+word_extractor.train(corpus)                  # 형태소에 해당하는 단어를 분리하는 학습을 수행
+word_score_table = word_extractor.extract()
+
+    # SOYNLP의 응집 확률
+    # cohesion : cohesion값이 가장 큰 위치가 하나의 단어를 이루고 있을 가능성이 높다.
+    # 조건부 확률 기반
+word_score_table['한'].cohesion_forward
+word_score_table['한강'].cohesion_forward
+word_score_table['한강공'].cohesion_forward
+word_score_table['한강공원'].cohesion_forward
+word_score_table['반포한강공원'].cohesion_forward
+
+
+    # 언어모델 : 단어 시퀀스에 확률을 할당하는 모델
+    # N-GRAM : 등장한 모든 단어를 고려하는 것이 아니라 일부 단어만 고려하는 접근 방법
+from nltk import ConditionalFreqDist
+from nltk.tokenize import word_tokenize
+from nltk.util import ngrams
+import numpy as np
+import nltk
+nltk.download('punkt')
+nltk.download('movie_reviews')
+from nltk.corpus import movie_reviews
+
+        # bigram 모델
+sentence = "I am a boy"
+word = word_tokenize(sentence)
+bigram = ngrams(word,2,pad_left=True,pad_right=True,left_pad_symbol="<s>",right_pad_symbol="</s>")
+list(bigram)
+cfd = ConditionalFreqDist([(t[0],t[1]) for t in bigram])
+
+sentence = []
+for token in movie_reviews.sents():
+    bigrams = ngrams(token,2,pad_left=True,pad_right=True,left_pad_symbol="<s>",right_pad_symbol="</s>")
+    sentence += [t for t in bigrams]
+
+cfd = ConditionalFreqDist([(t[0],t[1]) for t in bigrams])
+cfd = ConditionalFreqDist(sentence)
+cfd["<s>"].most_common(5)
+sentence[:20]
+
+
+    # 단어의 표현 방법
+    # BoW : 국소 표현(해당 단어 그 자체만 보고, 특정값을 맵핑하여 단어를 표현하는 방법)에 속하며, 단어의 빈도수를 카운트(Count)하여 단어를 수치화하는 단어 표현 방법
+    # 단어의 등장 순서를 고려하지 않는 빈도수 기반의 단어 표현 방법
+
+        # bow 함수
+def build_bag_of_words(document):
+    document = document.replace(",","")
+    tokenized_document = okt.morphs(document)
+
+    word_to_index ={}
+    bow = []
+
+    for word in tokenized_document:
+        if word not in word_to_index.keys():
+            word_to_index[word] = len(word_to_index)
+            # BoW에 전부 기본값 1을 넣는다.
+            bow.insert(len(word_to_index)-1,1)
+        else:
+            # 재등장하는 단어의 인덱스
+            index = word_to_index.get(word)
+            bow[index] = bow[index] + 1
+    
+    return word_to_index,bow
+
+doc1 = "정부가 발표하는 물가상승률과 소비자가 느끼는 물가상승률은 다르다."
+vocab , bow = build_bag_of_words(doc1)
+print('vocabulary :', vocab)
+print('bag of words vector :', bow)
+
+        # 주로 어떤 단어가 얼마나 등장했는지를 기준으로 문서가 어떤 성격의 문서인지를 판단하는 작업에 쓰입니다. 즉, 분류 문제나 여러 문서 간의 유사도를 구하는 문제에 주로 쓰입니다.
+
+
+    # CountVectorizer 클래스로 BoW 만들기
+    # 띄어쓰기만을 기준으로 단어를 자르는 낮은 수준의 토큰화를 진행
+from sklearn.feature_extraction.text import CountVectorizer
+
+corpus = ['you know I want your love. beacuse I love you']
+vector = CountVectorizer()
+# 코퍼스로부터 각 단어의 빈도수를 기록
+print("bag of words vector:",vector.fit_transform(corpus).toarray())
+# 각 단어의 인덱스가 어떻게 부여되었는지를 출력
+print("vocabulary:",vector.vocabulary_)
+
+
+    # 불용어를 제거한 BoW 만들기
+from nltk.corpus import stopwords
+nltk.download("stopwords")
+
+text = ["Family is not an important thing. It's everything"]
+# 1) 사용자가 직접 정의한 불용어 사용
+vect = CountVectorizer(stop_words=['the','a','an','is','not'])
+print(vect.fit_transform(text).toarray())
+print(vect.vocabulary_)
+# 2) CountVectorizer에서 제공하는 자체 불용어 사용
+vect = CountVectorizer(stop_words='english')
+print(vect.fit_transform(text).toarray())
+print(vect.vocabulary_)
+# 3) NLTK에서 지원하는 불용어 사용
+sw = stopwords.words("english")
+vect = CountVectorizer(stop_words=sw)
+print(vect.fit_transform(text).toarray())
+print(vect.vocabulary_)
+
+
+# 03.27----------------------------------------------------------------------------##
+
+    # 카운트 기반의 단어 표현
+    # 텍스트를 위와 같은 방식으로 수치화를 하고나면, 통계적인 접근 방법을 통해 여러 문서로 이루어진 텍스트 데이터가 있을 때 어떤 단어가 특정 문서 내에서 얼마나 중요한 것인지를 나타내거나, 
+    # 문서의 핵심어 추출, 검색 엔진에서 검색 결과의 순위 결정, 문서들 간의 유사도를 구하는 등의 용도로 사용할 수 있습니다.
+    
+    # 주어진 코퍼스를 정수 인코딩으로 숫자로 변환 후 코사인 유사도 구하기
+    # 유사도는 -1과1 사이(확률)
+    # 1에 가깝다고 인간이 생각하기에도 문장간의 유사도 명확한 것은 아님
+
+    # 1) BOW
+from konlpy.tag import Okt
+import konlpy
+okt = Okt()
+stopword_list = ['을', '은', '는', '이', '가', '를', '있', '하', '것', '들',' 그', '되', '수', '보', '않', '없', ',', '.', "게", '의', '내', '에서', '에']
+
+        # 형태소 단위로 분리 후 stopword 제거하는 함수
+def Tokenize(word: str) -> list:    # 새로운 문법 : word를 str로 지정하고 출력값을 list로 하겠다
+  temp = okt.morphs(word)
+  return [k for k in temp if k not in stopword_list]
+
+        # make Bag of Words
+def make_BOW(document: list) -> dict:
+
+  words = set(document)
+  BOW = dict()
+  for word in words:
+    if word not in BOW:
+      BOW[word] = len(BOW)
+  return BOW
+
+        # make count vector
+def make_cntvec(document: list, BOW: dict) -> list:
+
+  count_vector = [0] * len(BOW)
+
+  for idx, word in enumerate(BOW.keys()):
+    count_vector[idx] = document.count(word)
+  return count_vector
+
+sentence1 = Tokenize("나는 매일 아침 달리기를 한다")
+sentence2 = Tokenize("나는 매일 저녁 헬스장에 간다")
+sentence3 = Tokenize("날씨가 많이 추워졌다")
+BoW_sentence = sentence1 + sentence2 + sentence3
+
+bows = make_BOW(BoW_sentence)
+
+sent1_cntvec = make_cntvec(sentence1, bows)
+sent2_cntvec = make_cntvec(sentence2, bows)
+sent3_cntvec = make_cntvec(sentence3, bows)
+print(list(bows.keys()))
+print(sent1_cntvec)
+print(sent2_cntvec)
+print(sent3_cntvec)
+
+    # 2) 코사인 유사도
+        # count vector 유사도 분석에는 cosine similarity 사용
+import numpy as np
+from numpy import dot
+from numpy.linalg import norm
+
+def cos_sim(A,B):
+   return dot(A,B) / (norm(A)*norm(B))
+
+print("문장 1과 2의 코사인 유사도")
+cos_sim(sent1_cntvec, sent2_cntvec)
+
+print("문장 1과 3의 코사인 유사도")
+cos_sim(sent1_cntvec, sent3_cntvec)
+
+
+        # BoW에 기반한 단어 표현 방법인 DTM, TF-IDF
+
+    # 3) DTM
+    # 다수의 문서에서 등장하는 각 단어들의 빈도를 행렬로 표현한 것을 말함.
+    # 쉽게 생각하면 각 문서에 대한 BoW를 하나의 행렬로 만든 것으로 생각할 수 있으며, 
+    # BoW와 다른 표현 방법이 아니라 BoW 표현을 다수의 문서에 대해서 행렬로 표현하고 부르는 용어입니다.
+
+from sklearn.feature_extraction.text import CountVectorizer
+corpus = [
+    'This is the first document.',
+    'This is the second second document.',
+    'And the third one.',
+    'Is this the first document?',
+    'The last document?',
+]
+vect = CountVectorizer()
+vect.fit(corpus)
+vect.vocabulary_
+vect.transform(corpus).toarray()
+
+        # ngram
+vect = CountVectorizer(ngram_range=(2,2)).fit(corpus)
+vect.vocabulary_
+
+        # dictvectorizer
+from sklearn.feature_extraction import DictVectorizer
+v = DictVectorizer(sparse=False)
+D = [{'A': 1, 'B': 2}, {'B': 3, 'C': 1}]
+X = v.fit_transform(D)
+print(v.fit_transform(D))
+v.feature_names_
+v.feature_names_
+
+
+    # 희소행렬
+    # 대부분 값이 0으로 채워진 행렬을 희소 행렬(Sparse Matrix)이라고 합니다.
+
+    # 1) COO 방식
+    # 0이 아닌 데이터만 별도의 배열에 저장하고, 그 데이터가 가리키는 행과 열의 위치를 별도의 배열에 저장하는 방식
+from scipy import sparse
+import numpy as np
+
+# 0 이 아닌 데이터 추출
+data = np.array([3,1,2])
+
+# 행 위치와 열 위치를 각각 array로 생성
+row_pos = np.array([0,0,1])  # 행
+col_pos = np.array([0,2,1])  # 열
+
+# sparse 패키지의 coo_matrix를 이용하여 COO 형식으로 희소 행렬 생성
+sparse_coo = sparse.coo_matrix((data, (row_pos,col_pos))).toarray()
+
+    # 2) CSR 방식
+    # coo 방식에서 행 인덱스를 나타내는 리스트는 [0, 0, 1]이었습니다. 이는 행렬의 첫 번째 행에 0이 아닌 원소가 2개 있다는 의미입니다. 
+    # 첫 번째 행에 원소가 2개 있다는 것을 알기 위해 굳이 0을 두번 반복할 필요는 없습니다.
+
+from scipy.sparse import csr_matrix
+
+data = [2, 4, 2, 1, 5]
+
+indptr = [0, 3, 4, 5]     # 0:3 / 3:4 / 4:5 행
+indices = [0, 1, 2, 2, 3] # 열(coo방식과 같음)
+
+
+sparse_csr = csr_matrix((data, indices, indptr)).toarray()
+
+
+    # TF-IDF
+    # 개별 문서에서 자주 나타나는 단어에 높은 가중치를 주되, 
+    # 모든 문서에서 전반적으로 자주 나타나는 단어에 대해서는 패널티를 주는 방식으로 값을 부여
+    # DTM 내의각 단어들마다 중요한 정도를 가중치로 주는 방법
+    # TF와 IDF를 곱한 값을 의미
+    
+    # tf(t,d) : 특정 문서 d에서의 특징 단어 t의 등장 횟수
+    # df(t) : 특정 단어 t가 등장한 문서의 수
+    # idf(t,d) : df(t)에 반비례하는 수
+
+import pandas as pd # 데이터프레임 사용을 위해
+from math import log # IDF 계산을 위해
+
+docs = [
+  '먹고 싶은 사과',
+  '먹고 싶은 바나나',
+  '길고 노란 바나나 바나나',
+  '저는 과일이 좋아요'
+]
+
+N = len(docs)
+
+vocab = list(set(w for doc in docs for w in doc.split()))
+vocab.sort()
+vocab
+
+def tf(t,d):
+   return d.count(t)
+
+def idf(t):
+    df = 0
+    for doc in docs:
+      df += t in doc
+    return log(N/(df+1))
+
+def tfidf(t,d):
+   return tf(t,d) * idf(t)
+
+        # DTM 먼저 구하기
+        # 1) countvectorizer 함수 이용 방법
+vect = CountVectorizer()
+vect.fit(docs)
+vect.transform(docs).toarray()
+
+        # 2) 직접 for문으로 구현
+result = []
+for i in range(N):
+   result.append([])
+   d = docs[i]
+   for j in range(len(vocab)):
+      t = vocab[j]
+      result[-1].append(tf(t,d))
+tf_ = pd.DataFrame(result,columns = vocab)
+    
+        # 각 단어의 IDF값 구하기
+result = []
+for j in range(len(vocab)):
+   t = vocab[j]
+   result.append(idf(t))
+idf_ = pd.DataFrame(result,index = vocab,columns=["IDF"])
+
+        # TF - IDF 행렬 구하기
+result = []
+for i in range(N):
+   result.append([])
+   d = docs[i]
+   for j in range(len(vocab)):
+      t = vocab[j]
+      result[-1].append(tfidf(t,d))
+tfidf_ = pd.DataFrame(result,columns = vocab)
+
+
+    # TF - IDF 함수
+from sklearn.feature_extraction.text import TfidfVectorizer
+corpus = [
+    'you know I want your love',
+    'I like you',
+    'what should I do ',
+]
+tfidfv = TfidfVectorizer().fit(corpus)
+print(tfidfv.transform(corpus).toarray())
+
+# 03.28------------------------------------------------------------------------------------------------##
+
+    # 머신러닝 - 지도학습 -> 회귀분석(연속형 변수) <-> 분류분석
+    # 독립변수들이 종속변수에 미치는 영향을 추정
+    # 변수들 사이의 인과관계를 밝힌다
+    
+    # 상관관계 : 두 변수 간 선형적 또는 비선형적 관계
+    # 인과관계 : 하나의 사건이 다른 사건을 일으킬 때 두 사건의 관계
+
+    # 등분산성 : 잔차(에러)들의 변동성(분산)이 일정한 형태
+
+    # 정규성 (Q-Q plot) : 잔차들이 정규분포를 따른다
+
+    # 가정 : 에러(잔차)들의 분포가 독립적이고 등분산성이어야 하며 정규분포를 따라야 한다
+
+    # 최적의 회귀 모델을 만드는 것은 바로 데이터의 잔차합이 최소가 되는 모델을 만든다
+    # 동시에 오류값 합이 최소가 될 수 있는 최적의 회귀계수를 찾는 것
+
+    # 경사 하강법 : 기울기가 0이 되는 지접을 찾는 방법
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+np.random.seed(0)
+# y = 4X + 6 식을 근사(w1=4, w0=6). random 값은 Noise를 위해 만듬
+# w1 = X의 가중치 , w0 = 절편
+X = 2 * np.random.rand(100,1)
+y = 6 + 4 * X + np.random.rand(100,1)  # y = 6+4X (2에다가 랜덤값을 곱하면 랜덤값)
+
+# X, y 데이터 셋 scatter plot으로 시각화
+plt.scatter(X,y)
+plt.show()
+
+    # 경사하강법 식을 파이썬으로 구현
+
+# w1 과 w0 를 업데이트 할 w1_update, w0_update를 반환.
+def get_weight_updates(w1,w0,X,y,learning_rate = 0.01):
+   N = len(y)  # y = w0 + w1 * X_1 ->  벡터의 길이
+    # 먼저 w1_update, w0_update를 각각 w1, w0의 shape와 동일한 크기를 가진 0 값으로 초기화
+   w1_update = np.zeros_like(w1) #벡터크기에 따라서 0 mapping시켜줘.
+   w0_update = np.zeros_like(w0)
+    # 예측 배열 계산하고 예측과 실제 값의 차이 계산
+   y_pred = np.dot(X,w1.T) + w0  #np.matmul써도 되지만, 어차피 벡터 계산이기 때문에 dot 을 썻음. y = ax+b에서 ax : np.dot(X,w1.T)
+   diff = y - y_pred  # error function  = (실제값 - 예측값)
+
+    # w0_update를 dot 행렬 연산으로 구하기 위해 모두 1값을 가진 행렬 생성
+   w0_factors = np.ones((N,1))  # 초기값 ones로 셋팅 N크기만큼 받아들이고,
+
+    # w1과 w0을 업데이트할 w1_update와 w0_update 계산
+   w1_update = -(2/N) * learning_rate * (np.dot(X.T,diff))  # error ftn : mse(mean square error)
+    #/summation_i^n (y-y_hat)(-x_i)
+   w0_update = -(2/N) * learning_rate * (np.dot(w0_factors.T,diff))  # summation_i^n (y-y_hat)(-x_1)
+
+   return w1_update,w0_update  #W_0,W_1 update
+
+
+# 03.29------------------------------------------------------------------------------------------------------------------------------------------##
+
+    # SGD(stochastic gradient descent)
+    # 전체 데이터셋이 아닌 무작위로 뽑은 데이터들에 대한 Gradient Descent를 진행하고, 
+    # 이를 반복하며 정확도를 찾아감
+
+def stochastic_gradient_descent_steps(X,y,batch_size=10,iters=1000):
+   w0 = np.zeros((1,1))
+   w1 = np.zeros((1,1))
+
+   prev_cost = 100000
+
+   iter_index = 0
+
+   for i in range(iters):
+      stochastic_random_index = np.random.permutation(X.shape[0])
+      sample_X = X[stochastic_random_index[0:batch_size]]
+      sample_y = y[stochastic_random_index[0:batch_size]]
+
+      w1_update,w0_update = get_weight_updates(w1,w0,sample_X,sample_y,learning_rate=0.01)
+      w1 = w1 - w1_update
+      w0 = w0 - w0_update
+   return w1,w0
+
+w1, w0 = stochastic_gradient_descent_steps(X, y, iters=1000)
+print("w1:",round(w1[0,0],3),"w0:",round(w0[0,0],3))
+y_pred = w1[0,0] * X + w0
+print('Stochastic Gradient Descent Total Cost:{0:.4f}'.format(get_cost(y, y_pred)))
+
+w1, w0 = stochastic_gradient_descent_steps(X, y, iters=1000)
+print("w1:",round(w1[0,0],3),"w0:",round(w0[0,0],3))
+y_pred = w1[0,0] * X + w0
+print('Stochastic Gradient Descent Total Cost:{0:.4f}'.format(get_cost(y, y_pred)))
+
+
+    # sklearn에 boston 집 값 데이터
+import numpy as np
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.metrics import mean_squared_error
+
+        # 1) 데이터 만들기
+bos = pd.read_csv("C:/Users/Administrator/Downloads/boston_house_prices.csv")
+type(bos)
+bos.rename(columns={
+   '506' : 'CRIM',
+   '13' : 'ZN',
+   'Unnamed: 2' : 'INDUS',
+   'Unnamed: 3' : 'CHAS',
+   'Unnamed: 4' : 'NOX',
+   'Unnamed: 5' : 'RM',
+   'Unnamed: 6' : 'AGE',
+   'Unnamed: 7' : 'DIS',
+   'Unnamed: 8' : 'RAD',
+   'Unnamed: 9' : 'TAX',
+   'Unnamed: 10' : 'PTRATIO',
+   'Unnamed: 11' : 'B',
+   'Unnamed: 12' : 'LSTAT',
+   'Unnamed: 13' : 'PRICE',},inplace=True)
+bos = bos.drop(0,axis=0)
+bos.isnull().sum()
+bos.info()
+bos = bos.astype('float')
+
+
+
+        # 2) price 변수에 대해 그림 그리기
+sns.set(rc={'figure.figsize':(15,20)})
+plt.hist(bos['PRICE'],bins=30)
+plt.xlabel('House Prices in $1000')
+plt.show()
+
+        # 3) price 변수와 다른 변수들 간의 상관계수 구하기
+correlation_matrix = bos.corr().round(2)
+sns.heatmap(data = correlation_matrix,annot = True, fmt=".2f")
+plt.show()
+            # 다중공산성 문제 확인 : 독립 변수들 간에 강한 상관관계가 있는 경우 발생
+
+        # 4) price 변수와 강한 상관관계를 나타내는 변수 3개와의 그래프 표현(RM,PTRATIO,LSTAT)
+plt.figure(figsize=(20,5))
+features = ['RM','PTRATIO', 'LSTAT']
+target = bos['PRICE']
+
+for i,feature in enumerate(features):
+   plt.subplot(1,len(features),i+1)
+   x = bos[feature]
+   y = target
+   plt.scatter(x,y,marker='o',color = 'red')
+   plt.title("Variation in House Prices")
+   plt.xlabel(feature)
+   plt.ylabel("House Prices in $1000")
+
+plt.show()
+
+        # 5) 모든 변수에 대해서
+all_columns = ['LSTAT','INDUS','NOX','PTRATIO','RM','TAX','DIS','AGE']
+x = bos.loc[:,all_columns]
+y = bos['PRICE']
+fig, axs = plt.subplots(nrows = 2, ncols = 4,figsize=(20,5))  # subplot(하나의 서브플랏을 생성) vs subplots(여러개의 서브플랏 그릴 떄)
+axs = axs.flatten()
+for i,j in enumerate(all_columns):
+   sns.regplot(x = x[j], y=y, ax=axs[i])
+
+plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=5.0)
+plt.show()
+
+        # 'RM' 변수와 'PRICE' 변수의 선형회귀
+        # 1) shape을 같게 만들자 -> 2) 훈련 데이터와 시험 데이터를 나누자
+bos['RM'].shape
+bos['PRICE'].shape
+
+X_rooms = bos['RM']
+y_prices = bos['PRICE']
+            # -1은 해당 차원의 크기를 다른 차원의 크기에 맞추라는 의미 / 열의 개수는 1로 설정되므로 1열로 구성된 2차원 배열
+X_rooms = np.array(X_rooms).reshape(-1,1)  
+y_prices = np.array(y_prices).reshape(-1,1)
+
+            # 훈련문제집, 시험문제집, 훈련답안지, 시험답안지
+X_train,X_test,Y_train,Y_test = train_test_split(X_rooms,y_prices,test_size=0.2,random_state=5)
+
+print(X_train.shape)
+print(X_test.shape)
+print(Y_train.shape)
+print(Y_test.shape)
+
+
+            # 선형 회귀분석의 4가지 가정
+            # 1) 독립변수와 종속변수 간에 선형 관계를 가정한다
+            # 2) 오차항은 정규분포를 따른다
+            # 3) 오차항은 등분산성을 가정한다(독립 변수의 값이 변해도 종속 변수의 분산이 일정하다는 것)
+            # 4) 공분산성이 없다
+liner = LinearRegression()
+liner.fit(X_train,Y_train)  # 훈련용 데이터로 훈련실시
+
+            # RMSE : MSE에 루트한 값 -> 회귀분석에서 예측 모델 성능을 측정하는 일반적인 지표 중 하나 -> 작을수록 모델의 예측이 정확함
+            # R제곱(결정계수) : sse/sst(설명가능한 변수의 변동/전체 변동) -> 0~1 사이 -> 1에 가까울수록 모델이 종속 변수의 변동을 완벽하게 설명한다는 것
+            
+            # RMSE는 예측의 정확성에 중점을 두고, 예측 값과 실제 값 사이의 오차 크기를 측정합니다. 
+            # 반면에, R 제곱은 모델의 설명력에 중점을 두고, 모델이 종속 변수의 변동을 얼마나 잘 설명하는지를 측정합니다.
+
+            # 훈련용 데이터로 학습한 모델의 성능평가
+Y_train_predict = liner.predict(X_train) # 모델이 예측한 값 보기
+rmse = np.sqrt(mean_squared_error(Y_train,Y_train_predict)) # 실제값(Y_train)과 예측값(Y_train_predict)간에 오차 크기 측정
+r2 = round(liner.score(X_train,Y_train),2)
+print("The model performance for training set")
+print("--------------------------------------")
+print('RMSE is {}'.format(rmse))
+print('R2 score is {}'.format(r2))
+
+            # 시험용 데이터로 시험본 모델의 성능 평가
+Y_test_predict = liner.predict(X_test)
+rmse = np.sqrt(mean_squared_error(Y_test,Y_test_predict))
+r2 = round(liner.score(X_test, Y_test),2)
+print("The model performance for test set")
+print("--------------------------------------")
+print("Root Mean Squared Error: {}".format(rmse))
+print("R^2: {}".format(r2))
+
+            # 'RM' 변수와 'PRICE' 변수로 만든 모델을 시각화
+prediction_space = np.linspace(min(X_rooms),max(X_rooms)).reshape(-1,1)  # 방의 수 값들의 범위를 정의하고, 해당 범위에 대해 모델이 예측한 값을 계산하여 시각적으로 나타내는 데 사용
+plt.scatter(X_rooms,y_prices)
+plt.plot(prediction_space,liner.predict(prediction_space),color='black',linewidth=3)
+plt.ylabel('value of house/1000($)')
+plt.xlabel('number of rooms')
+plt.show()
+
+            # 모델이 구한 직선의 절편이랑 회귀계수(가중치,기울기) 구하기
+print('절편 값:',liner.intercept_)
+print(liner.coef_)
+print('회귀 계수값:', np.round(liner.coef_, 1))
+
+
+        # K-fold cross validation : K 겹 교차 검증
+        # 데이터를 K개로 쪼개 한번씩은 다 테스트 데이터로 쓰이게 하는 모델 평가의 방법중 하나
+
+        # 위에서 'RM'과 'PRICE'를 비교한것과 같이 비교하지만 이번에는 훈련용 데이터를 5번 쪼개 시험보게 만들고 성능이 얼마나 향상 되었는지 평가해보겠다
+
+X_data = bos['RM']
+Y_target = bos['PRICE']
+lr = LinearRegression()
+# cross_val_score( )로 5 Fold 셋으로 MSE 를 구한 뒤 이를 기반으로 다시  RMSE 구함. 
+neg_mse_scores = cross_val_score(lr, X_data, Y_target, scoring="neg_mean_squared_error", cv = 5)
+rmse_scores  = np.sqrt(-1 * neg_mse_scores)
+avg_rmse = np.mean(rmse_scores)

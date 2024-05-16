@@ -1,0 +1,582 @@
+## 04.01---------------------------------------------------------------------------------------------------------------------------##
+
+## 04.02---------------------------------------------------------------------------------------------------------------------------##
+from sklearn.linear_model import LogisticRegression
+from sklearn.datasets import load_iris
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
+import numpy as np
+
+
+    # <로지스틱 회귀 모델> / <의사결정 나무 모델>
+
+    # iris 데이터
+iris = load_iris()
+X = iris.data
+y = iris.target
+df_X = pd.DataFrame(X,columns=iris.feature_names)
+df_y = pd.DataFrame(y,columns=['Species'])
+
+df = pd.DataFrame(X,columns = iris.feature_names)
+df['target'] = y
+df
+
+sns.pairplot(df,hue='target')
+plt.show()
+
+sns.histplot(df[df.target != "0"]["petal length (cm)"], hist=True, rug=True, label="setosa")
+sns.histplot(df[df.target == "0"]["petal length (cm)"], hist=True, rug=True, label="others")
+plt.legend()
+plt.show()
+
+train_input,test_input,train_target,test_target = train_test_split(X,y,test_size=0.2)
+lr = LogisticRegression()
+lr.fit(train_input,train_target)
+lr.score(test_input,test_target)
+test_target
+lr.predict(test_input)
+lr.predict_proba(test_input)
+
+
+    # 유방암 데이터
+from sklearn.datasets import load_breast_cancer
+cancer = load_breast_cancer()
+
+
+        # 하나의 데이터프레임으로 생성
+cancer_df = pd.DataFrame(cancer.data,columns = cancer.feature_names)
+cancer_df['target'] = cancer.target
+cancer_df
+
+np.bincount(cancer.target)
+
+        # 특성 이름 확인
+for i,name in enumerate(cancer.feature_names):
+    print('%02d : %s' %(i,name))
+
+
+np.histogram(cancer.data[:,0], bins=20)
+_, bins=np.histogram(cancer.data[:,0], bins=20)
+print(_)
+print(bins)
+
+        # 특성에 따른 타켓들의 그래프
+melignant = cancer.data[cancer.target == 0]
+benign = cancer.data[cancer.target == 1]
+
+plt.figure(figsize=(20,15))
+
+for feature in range(cancer.feature_names.shape[0]):
+    plt.subplot(8,4,feature+1)
+    _, bins=np.histogram(cancer.data[:,0], bins=20)
+
+    plt.hist(melignant[:,feature],bins=bins,alpha=0.3)
+    plt.hist(benign[:,feature],bins=bins,alpha=0.3)
+    plt.title(cancer.feature_names[feature])
+    if feature == 0: plt.legend(cancer.target_names)
+    plt.xticks([])
+
+plt.show()
+
+## 04.03---------------------------------------------------------------------------------------------------------------------------##
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, precision_score,recall_score,roc_auc_score
+from sklearn.metrics import f1_score, confusion_matrix,precision_recall_curve, roc_curve
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+
+    # 데이터 불러오기
+diabetes = pd.read_csv("/content/diabetes.csv")
+    # 데이터 확인
+diabetes['Outcome'].value_counts()   # 0과 1에 갯수가 다르다!! 0:Negative / 1:Positive
+diabetes.info()
+diabetes.describe()
+    # 상관관계 그래프
+corr = diabetes.corr()
+sns.heatmap(corr,annot=True)
+    # 결측치 확인
+diabetes.isnull().sum() 
+    # 박스 그래프 그리기
+ column = diabetes.columns
+ plt.figure(figsize = (16,8))
+ for i in range(len(diabetes.columns)):
+    plt.subplot(3,3,i+1)
+    sns.boxplot(x="Outcome",y=column[i],data=diabetes)
+    plt.tight_layout()
+    
+    # 막대 그래프 그리기
+ column = diabetes.columns
+ plt.figure(figsize = (16,8))
+ for i in range(len(diabetes.columns)):
+    plt.subplot(3,3,i+1)
+    diabetes[column[i]].hist()
+    plt.xlabel(column[i])
+    plt.tight_layout()
+
+    # 벗어나는 이상치 제거 : 3시그마 방법
+column = diabetes.columns
+for col in column:
+    mean = diabetes[col].mean()
+    std = diabetes[col].std()
+    threshold = mean + 3*std
+    count_outlier = np.sum(diabetes[col] > threshold)
+    print(col , "열의 이상치 갯수 : " , str(count_outlier))
+
+    # 이상치 제거
+    # 각 열에 모든 행에
+column = diabetes.columns
+for col in column:
+    mean = diabetes[col].mean()
+    std = diabetes[col].std()
+    threshold = mean + 3*std
+    diabetes.drop(diabetes[diabetes[col]>threshold].index[:],inplace=True)  
+new_diabetes = diabetes.dropna()
+
+    # 로지스틱 회귀모델 적용
+X = new_diabetes.iloc[:,:-1]
+y = new_diabetes.iloc[:,-1]
+print(X.shape,y.shape)
+X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=0.2,random_state=42,stratify=y)     
+lr = LogisticRegression(solver = 'liblinear')
+lr.fit(X_train,y_train)
+lr.score(X_test,y_test)
+# 두 개의 클래스(양성과 음성)가 있는 이진 분류 문제에서 데이터를 나눌 때, stratify=y를 설정하면 훈련 세트와 테스트 세트 모두에서 클래스 비율이 원본 데이터와 동일하게 유지
+
+    # 모델 성능 평
+def get_clf_eval(y_test=None, pred=None):
+    confusion = confusion_matrix(y_test, pred)    # 오차행렬
+    accuracy = accuracy_score(y_test , pred)      # 정확도
+    precision = precision_score(y_test , pred)    # 정밀도
+    recall = recall_score(y_test , pred)          # 재현율
+    f1 = f1_score(y_test,pred)                    # F1
+    # ROC-AUC 추가
+    roc_auc = roc_auc_score(y_test, pred)
+    print('오차 행렬')
+    print(confusion)
+    # ROC-AUC print 추가
+    print('정확도: {0:.4f}, 정밀도: {1:.4f}, 재현율: {2:.4f},\
+    F1: {3:.4f}, AUC:{4:.4f}'.format(accuracy, precision, recall, f1, roc_auc))
+pred = lr.predict(X_test)
+get_clf_eval(y_test,pred)
+
+    # 0값이 있는 열을 확인하고 평균값으로 대체
+zero_features = ['Glucose', 'BloodPressure','SkinThickness','Insulin','BMI']
+for feature in zero_features:
+    count = new_diabetes[new_diabetes[feature] == 0][feature].count()
+    print(f"{feature}의 0 건수는 {count} 입니다.")
+new_diabetes[zero_features] = new_diabetes[zero_features].replace(0,new_diabetes[zero_features].mean())
+new_diabetes.describe()
+
+    # 이번엔 0값을 평균으로 대체했고 standsclar써서 다시 모델 평가를 해보겠다 -> 떨어짐
+X = new_diabetes.iloc[:,:-1]
+y = new_diabetes.iloc[:,-1]
+
+# StandardScaler 클래스를 이용해 피처 데이터 세트에 일괄적으로 스케일링 적용
+scaler = StandardScaler( )
+
+X_scaled = scaler.fit_transform(X)
+
+X_train,X_test,y_train,y_test = train_test_split(X_scaled,y,test_size=0.2,random_state=156,stratify=y)    
+lr = LogisticRegression(solver = 'liblinear')
+lr.fit(X_train,y_train)
+lr.score(X_test,y_test)
+
+    # 의사결정 나무 모델 적용
+from sklearn import tree
+from sklearn.tree import DecisionTreeClassifier
+Decision_tree_clf = DecisionTreeClassifier()
+
+X = new_diabetes.iloc[:,:-1]
+y = new_diabetes.iloc[:,-1]
+
+X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=0.2,random_state=42,stratify=y)
+
+Decision_tree_clf.fit(X_train,y_train)
+Decision_predict = Decision_tree_clf.predict(X_test)
+get_clf_eval(y_test,Decision_predict)
+
+    # 랜덤포레스트 모델 적용
+# 배깅 방식 : 앙상블 학습의 기법 중 하나로 여러개의 기계 학습 모델을 독립적으로 학습시킨 후, 그 결과를 투표 또는 평균을 통해 종합하는 방법
+# 부스팅 방식 : 훈련 데이터세트에 대해 오차가 더 적은 모델들에 더 많은 가중치를 부여
+
+# 랜덤 포레스트는 배깅방식을 사용하는 앙상블 학습 모델입니다.
+# 배깅은 여러 개의 결정 트리를 독립적으로 학습하여 각자의 예측을 평균화하여 최종 예측을 만드는 방식입니다.
+from sklearn.ensemble import RandomForestClassifier
+Decision_tree_random = RandomForestClassifier()
+
+X = new_diabetes.iloc[:,:-1]
+y = new_diabetes.iloc[:,-1]
+
+X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=0.2,random_state=42,stratify=y)
+
+Decision_tree_random.fit(X_train,y_train)
+predict = Decision_tree_random.predict(X_test)
+get_clf_eval(y_test,predict)
+
+    # 그래디언 부스트 모델 적용
+from sklearn.ensemble import GradientBoostingClassifier
+gradientboost = GradientBoostingClassifier()
+
+X = new_diabetes.iloc[:,:-1]
+y = new_diabetes.iloc[:,-1]
+
+X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=0.2,random_state=42,stratify=y)
+
+gradientboost.fit(X_train,y_train)
+p = gradientboost.predict(X_test)
+get_clf_eval(y_test,p)
+
+
+
+## 04.04---------------------------------------------------------------------------------------------------------------------------##
+
+    # 변수의 중요도
+    # Sharp Value
+!pip install shap
+import shap
+import xgboost as xgb  # or any other tree-based model library
+
+# Assuming you have your model and data ready
+tree_model = xgb.XGBClassifier()  # Example XGBoost classifier
+tree_model.fit(X_train, y_train)  # Train your model
+
+# Create object that can calculate SHAP values
+explainer = shap.TreeExplainer(tree_model)
+
+# Calculate SHAP values
+shap_values = explainer.shap_values(X_test)  # Assuming X_test is your test data
+
+# Initialize JavaScript visualizations in Jupyter Notebook
+shap.initjs()
+
+# X_test에 있는 첫번째 값에 대한 각 특성들의 기여도
+shap.force_plot(explainer.expected_value, shap_values[0], X_test.iloc[0, :])
+
+
+    # Ada Boosting
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn import datasets
+from sklearn import metrics
+
+iris = datasets.load_iris()
+X = iris.data
+y= iris.target
+
+X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=0.3)
+
+abc = AdaBoostClassifier(n_estimators = 50,
+                         learning_rate = 1,
+                         random_state = 7777)
+model = abc.fit(X_train,y_train)
+
+y_pred = model.predict(X_test)
+
+print("Accuracy : ", metrics.accuracy_score(y_test,y_pred))
+
+
+    # Gradient Boosting : 트리모형에서 틀린 것에 가중치를 보여함(가중치를 Gradient Descent방식으로)
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.datasets import load_breast_cancer
+
+cancer = load_breast_cancer()
+
+X = cancer.data
+y = cancer.target
+
+X_train,X_test,y_train,y_test = train_test_split(X,y,stratify=y,random_state=0)
+
+gbc = GradientBoostingClassifier(random_state=0,max_depth = 1,learning_rate=0.01)
+gbc.fit(X_train,y_train)
+
+score_train = gbc.score(X_train, y_train) # train set 정확도
+
+print('{:.3f}'.format(score_train))
+
+score_test = gbc.score(X_test, y_test) # 일반화 정확도
+
+print('{:.3f}'.format(score_test))
+
+## 04.05---------------------------------------------------------------------------------------------------------------------------##
+
+    # Xgboost
+import pandas as pd
+import numpy as np
+import warnings
+warnings.filterwarnings('ignore')
+from sklearn.tree import DecisionTreeRegressor
+
+df_census = pd.read_csv("C:/Users/Administrator/OneDrive/바탕 화면/census_cleaned.csv")
+# 데이터를 X와 y로 나눕니다.
+X = df_census.iloc[:,:-1]
+y = df_census.iloc[:,-1]
+
+# train_test_split 함수를 임포트합니다.
+from sklearn.model_selection import train_test_split
+
+# 데이터를 훈련 세트와 테스트 세트로 나눕니다.
+X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=2)
+
+# DecisionTreeClassifier를 임포트합니다.
+from sklearn.tree import DecisionTreeClassifier
+
+# accuracy_score를 임포트합니다.
+from sklearn.metrics import accuracy_score
+
+# 분류 모델을 만듭니다.
+clf = DecisionTreeClassifier(random_state=2)
+
+# 훈련 데이터로 모델을 훈련합니다.
+clf.fit(X_train, y_train)
+
+# 테스트 데이터에 대한 예측을 만듭니다.
+y_pred = clf.predict(X_test)
+
+# 정확도를 계산합니다.
+accuracy_score(y_pred, y_test)
+
+
+from sklearn.model_selection import train_test_split
+# bike_rentals_cleaned 데이터셋을 로드합니다.
+df_bikes = pd.read_csv("C:/Users/Administrator/OneDrive/바탕 화면/bike_rentals_cleaned.csv")
+
+# 데이터를 X와 y로 나눕니다.
+X_bikes = df_bikes.iloc[:,:-1]
+y_bikes = df_bikes.iloc[:,-1]
+
+# LinearRegression을 임포트합니다.
+from sklearn.linear_model import LinearRegression
+
+# 데이터를 훈련 세트와 테스트 세트로 나눕니다.
+X_train, X_test, y_train, y_test = train_test_split(X_bikes, y_bikes, random_state=2)
+
+# DecisionTreeRegressor를 임포트합니다.
+from sklearn.tree import DecisionTreeRegressor
+
+# cross_val_score를 임포트합니다.
+from sklearn.model_selection import cross_val_score
+
+# DecisionTreeRegressor 객체를 만듭니다.
+reg = DecisionTreeRegressor(random_state=2)
+
+# 평균 제곱 오차로 교차 검증 점수를 계산합니다.
+scores = cross_val_score(reg, X_bikes, y_bikes, scoring='neg_mean_squared_error', cv=5)
+
+# 제곱근을 계산합니다.
+rmse = np.sqrt(-scores)
+
+# 평균을 출력합니다.
+print('RMSE 평균: %0.2f' % (rmse.mean()))
+    # RMSE가 너무 높게 나옴
+
+# DecisionTreeRegressor를 훈련 세트에서 훈련하고 점수를 계산합니다.
+reg = DecisionTreeRegressor()
+reg.fit(X_train, y_train)
+y_pred = reg.predict(X_train)
+from sklearn.metrics import mean_squared_error
+reg_mse = mean_squared_error(y_train, y_pred)
+reg_rmse = np.sqrt(reg_mse)
+reg_rmse
+
+    # 파라미터를 조정해서 손 봐주겠다
+    # 먼저 노드가 몇개인지 확인
+leaf_node_count = 0
+tree = reg.tree_
+for i in range(tree.node_count):
+    if(tree.children_left[i] == -1) and (tree.children_right[i] == -1):
+        leaf_node_count += 1
+        if tree.n_node_samples[i] > 1:
+            print("노드 인덱스: ",i,", 샘플 개수: ",tree.n_node_samples[i])
+print("전체 리프 노드 개수:" , leaf_node_count)
+
+    # GridSearchCV : 모델의 하이퍼파라미터 튜닝을 위한 교차검증을 수행하는 도구
+    # 데이터 전처리를 완전히 한 후 모델 적용하고 고도화 수행
+from sklearn.model_selection import GridSearchCV
+params = {'max_depth' : [None,2,3,4,6,8,10,20]} # 직접 범위를 정해줘야됨
+reg = DecisionTreeRegressor(random_state=2)
+# GridSearchCV 객체를 초기화합니다.
+grid_reg = GridSearchCV(reg, params, scoring='neg_mean_squared_error',
+                        cv=5, return_train_score=True, n_jobs=-1)
+
+    # neg_mean_squared_error : 평균 제곱 오차의 음수값 : 값이 높을수록(절대값이 클수록) 모델 성능이 좋다
+    # n_jobs: 병렬 처리를 위한 작업 수를 지정합니다. -1로 설정하면 가능한 모든 CPU 코어를 사용합니다
+
+# X_train와 y_train로 그리드 서치를 수행합니다.
+grid_reg.fit(X_train, y_train)
+
+# 최상의 매개변수를 추출합니다.
+best_params = grid_reg.best_params_
+
+# 최상의 매개변수를 출력합니다.
+print("최상의 매개변수:", best_params)
+
+# 최상의 점수를 계산합니다.
+best_score = np.sqrt(-grid_reg.best_score_)  # neg_mean_squared_erro 이므로 앞에 -붙여서 양수로
+
+# 최상의 점수를 출력합니다.
+print("훈련 점수: {:.3f}".format(best_score))
+    # 점수가 900점대로 떨어짐
+
+
+# 프 노드가 가질 수 있는 최소 샘플의 개수를 제한
+# max_depth와 마찬가지로 min_samples_leaf는 과대적합을 방지
+
+# grid_search 함수를 만듭니다.
+def grid_search(params, reg=DecisionTreeRegressor(random_state=2)):
+
+    # GridSearchCV 객체를 만듭니다.
+    grid_reg = GridSearchCV(reg, params, scoring='neg_mean_squared_error', cv=5, n_jobs=-1)
+
+    # X_train와 y_train에서 그리드 서치를 수행합니다.
+    grid_reg.fit(X_train, y_train)
+
+    # 최상의 매개변수를 추출합니다.
+    best_params = grid_reg.best_params_
+
+    # 최상의 매개변수를 출력합니다.
+    print("최상의 매개변수:", best_params)
+
+    # 최상의 점수를 계산합니다.
+    best_score = np.sqrt(-grid_reg.best_score_)
+
+    # 최상의 점수를 출력합니다.
+    print("훈련 점수: {:.3f}".format(best_score))
+
+    # 테스트 세트에 대한 예측을 만듭니다.
+    y_pred = grid_reg.predict(X_test)
+
+    # 평균 제곱근 오차를 계산합니다.
+    rmse_test = mean_squared_error(y_test, y_pred)**0.5
+
+    # 테스트 세트 점수를 출력합니다.
+    print('테스트 점수: {:.3f}'.format(rmse_test))
+
+grid_search(params={'min_samples_leaf':[1,2,4,6,8,10,20,30]})
+grid_search(params={'max_depth':[None,2,3,4,6,8,10,20],'min_samples_leaf':[1,2,4,6,8,10,20,30]})
+grid_search(params={'max_depth':[6,7,8,9,10],'min_samples_leaf':[3,5,7,9]})
+
+
+    # 사례 연구 - 심장 질환 -----------------------------------------------------------------------------------------------------
+
+    # 결정 트리 하이퍼파라미터는 모두 사용하기에 너무 많습니다
+    # 경험적으로 보았을 때, max_depth, max_features, min_samples_leaf, max_leaf_nodes, min_impurity_decrease, min_samples_split으로도 충분함
+from sklearn.tree import DecisionTreeClassifier
+import pandas as pd
+from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV,RandomizedSearchCV
+import numpy as np
+from sklearn.metrics import accuracy_score
+
+df_heart = pd.read_csv("C:/Users/Administrator/OneDrive/바탕 화면/heart_disease.csv")
+df_heart.head()
+
+X = df_heart.iloc[:,:-1]
+y = df_heart.iloc[:,-1]
+
+X_train, X_test, y_train, y_test = train_test_split(X, y,test_size=0.2, random_state=2)
+
+model = DecisionTreeClassifier(random_state=2)
+
+scores = cross_val_score(model, X, y, cv=5)
+scores
+
+print('정확도:', np.round(scores, 2))
+print('정확도 평균: %0.2f' % (scores.mean()))  # 0.76 => 최적의 하이퍼파라미터 찾고 성능 올리겠다.
+        #---------------------------------------
+params = {'max_depth' : [None,2,5,9,10,20],   # 최적의 파라미터를 찾기 위해 모델 훈련
+          'max_features' : ['log','sqrt'],
+          'min_samples_leaf' : [1,3,5],
+          'min_samples_split' : [2,5,10]}
+grid = GridSearchCV(model,params,scoring="accuracy",
+                    cv=5,return_train_score=True,n_jobs=-1)
+grid.fit(X_train,y_train)
+print("Best parameters: ", grid.best_params_)
+print("Best cross-validation score: {:.2f}".format(grid.best_score_))
+best_model = grid.best_estimator_
+best_model
+        #-------------------------------------------
+scores = cross_val_score(best_model,X,y,cv=5)       # 파라미터를 적용한 최고의 모델 평가
+print("정확도:",np.round(scores,2))
+print("정확도 평균:",scores.mean())  # gridsearchcv :  0.715792349726776
+        #------------------------------------------------
+        # RandomizedSearchCV
+def randomized_search_cv(params,runs=20,clif=DecisionTreeClassifier(random_state=2)):           # 최적의 파라미터를 찾기 위해 모델 훈련
+    rand_grid = RandomizedSearchCV(clif,params,n_iter=runs,
+                                   cv=5,n_jobs=-1,random_state=2)
+    rand_grid.fit(X_train,y_train)
+    best_model = rand_grid.best_estimator_
+    best_score = rand_grid.best_score_
+    print("훈련 점수: {:.3f}".format(best_score))
+    y_pred = best_model.predict(X_test)
+    accuracy = accuracy_score(y_test,y_pred)
+    print('테스트 점수: {:.3f}'.format(accuracy))
+
+    return best_model
+
+randomized_search_cv(
+    params={
+        'criterion':['entropy', 'gini'],
+        'splitter':['random', 'best'],
+        'min_samples_split':[2, 3, 4, 5, 6, 8, 10],
+        'min_samples_leaf':[1, 0.01, 0.02, 0.03, 0.04],
+        'min_impurity_decrease':[0.0, 0.0005, 0.005, 0.05, 0.10, 0.15, 0.2],
+        'max_leaf_nodes':[10, 15, 20, 25, 30, 35, 40, 45, 50, None],
+        'max_features':['sqrt', 0.95, 0.90, 0.85, 0.80, 0.75, 0.70],
+        'max_depth':[None, 2,4,6,8],
+        'min_weight_fraction_leaf':[0.0, 0.0025, 0.005, 0.0075, 0.01, 0.05]
+    })
+
+best_model = randomized_search_cv(
+    params={'max_depth':[None, 6, 7],
+            'max_features':['sqrt', 0.78],
+            'max_leaf_nodes':[45, None],
+            'min_samples_leaf':[1, 0.035, 0.04, 0.045, 0.05],
+            'min_samples_split':[2, 9, 10],
+            'min_weight_fraction_leaf': [0.0, 0.05, 0.06, 0.07],
+            },
+    runs=100)
+        #---------------------------------------------
+score = cross_val_score(best_model,X,y,cv=5)    # 파라미터를 적용한 최고의 모델 평가
+print('정확도:' , np.round(score,2))
+print('정확도 평균: {}'.format(score.mean()))    # randomizedsearchcv : 0.8049726775956284 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
