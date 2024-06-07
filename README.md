@@ -2,8 +2,9 @@
 - 머신러닝 + 딥러닝 공부 자료
 - ML) Regression / Classification
 - DL) LLM / Attention / Transformer / Bert
-- DL) CV / AlexNet / GoogleNet(Inception) / VGGNet / ResNet / ViT
-- DL) Object Detection / 
+- DL) Object Classification / AlexNet / GoogleNet(Inception) / VGGNet / ResNet / ViT
+- DL) Object Detection / R-CNN / Yolo
+- DL) Object Segmentation / FCN / U-Net / SegFormer 
   
 # 자습서
 - XGBoost와 사이킷런을 활용한 그레이디언트 부스팅
